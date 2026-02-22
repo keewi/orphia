@@ -1,95 +1,56 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { musicals } from "@/data/musicals";
+import { reviews } from "@/data/reviews";
+import SearchableMusicalGrid from "./SearchableMusicalGrid";
+
+export const dynamic = "force-dynamic";
+
+function Stars({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+  return (
+    <span className="stars">
+      {"★".repeat(full)}
+      {half && "½"}
+      {"☆".repeat(empty)}
+    </span>
+  );
+}
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="page-container">
+      <h2 className="section-title">Explore Shows</h2>
+      <SearchableMusicalGrid musicals={musicals} />
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+      <h2 className="section-title">My Reviews</h2>
+      {reviews.length === 0 ? (
+        <div className="empty-state">
+          <span className="emoji">🎭</span>
+          No reviews yet — discover a show above and write your first review!
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : (
+        <ul className="review-list">
+          {reviews.map((r) => (
+            <li key={r.id} className="review-card">
+              <div className="review-header">
+                <p className="review-title">{r.musicalTitle}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <Stars rating={r.rating} />
+                  <Link href={`/edit/${r.id}`} className="btn btn-edit">
+                    Edit
+                  </Link>
+                </div>
+              </div>
+              <p className="review-text">{r.reviewText}</p>
+              {r.dateSeen && (
+                <p className="review-date">Seen on {r.dateSeen}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
