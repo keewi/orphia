@@ -25,7 +25,7 @@ export default function AddReviewPage({
         </Link>
         <div className="form-card">
           <h1>
-            Review: {musical.title}{" "}
+            Add to Playbill: {musical.title}{" "}
             <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "1rem" }}>
               ({musical.year})
             </span>
@@ -57,13 +57,13 @@ export default function AddReviewPage({
             </div>
 
             <div className="form-group">
-              <label htmlFor="dateSeen">Date Seen (optional)</label>
+              <label htmlFor="dateSeen">Date Attended (optional)</label>
               <input type="date" id="dateSeen" name="dateSeen" />
             </div>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-submit">
-                Submit Review
+                Save to Playbill
               </button>
               <Link href="/" className="btn-cancel">
                 Cancel

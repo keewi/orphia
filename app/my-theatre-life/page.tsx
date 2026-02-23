@@ -1,83 +1,127 @@
 import Link from "next/link";
-import { musicals } from "@/data/musicals";
-import type { Musical } from "@/data/musicals";
 import { createClient } from "@/lib/supabase/server";
+import { deriveProfileStats } from "@/lib/profileStats";
+import { Stars } from "@/app/ReviewCards";
 
 export const dynamic = "force-dynamic";
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default async function MyTheatreLife() {
   const supabase = createClient();
 
-  // Get all seen entries
-  const { data: entries } = await supabase
-    .from("seen_entries")
-    .select("musical_id, created_at")
+  // Get all reviews
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("id, musical_id, musical_title, rating, review_text, date_seen, created_at")
     .order("created_at", { ascending: false });
 
-  const seenCount = entries?.length ?? 0;
+  const { seenCount, sinceYear, uniqueShows } = deriveProfileStats(reviews ?? []);
+  const mostRecent = reviews?.[0] ?? null;
 
-  // Compute unique shows and recent list
-  const latestMap = new Map<string, string>();
-  if (entries) {
-    for (const entry of entries) {
-      if (!latestMap.has(entry.musical_id)) {
-        latestMap.set(entry.musical_id, entry.created_at);
-      }
+  // Group reviews by year (displayDate = date_seen ?? created_at)
+  const yearGroups: Map<number, typeof reviews> = new Map();
+  if (reviews) {
+    for (const r of reviews) {
+      const displayDate = r.date_seen
+        ? new Date(r.date_seen + "T00:00:00")
+        : new Date(r.created_at);
+      const year = displayDate.getFullYear();
+      if (!yearGroups.has(year)) yearGroups.set(year, []);
+      yearGroups.get(year)!.push(r);
     }
   }
 
-  const uniqueShows = latestMap.size;
-  const musicalMap = new Map(musicals.map((m) => [m.id, m]));
-
-  // Sort by most-recently-seen first
-  const recentShows: Musical[] = Array.from(latestMap.entries())
-    .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
-    .map(([id]) => musicalMap.get(id))
-    .filter((m): m is Musical => m !== undefined);
+  // Sort year keys descending; within each group, already sorted by created_at desc
+  const sortedYears = Array.from(yearGroups.keys()).sort((a, b) => b - a);
 
   return (
     <div className="page-container">
-      <h2 className="section-title">My Playbill</h2>
+      <h2 className="section-title">My Playbills</h2>
 
-      {/* ── Hero Stats ── */}
-      <div className="hero-stats">
-        <div className="stat-card">
-          <span className="stat-number">{seenCount}</span>
-          <span className="stat-label">Shows Seen</span>
+      {seenCount > 0 && sinceYear && (
+        <p className="profile-opener">
+          {seenCount} {seenCount === 1 ? "playbill" : "playbills"} collected since {sinceYear} · {uniqueShows} unique {uniqueShows === 1 ? "show" : "shows"}
+        </p>
+      )}
+
+      {/* ── Most Recently Added ── */}
+      {mostRecent && (
+        <div className="highlight-card">
+          {/* ── Banner ── */}
+          <div className="highlight-banner">
+            <p className="highlight-header">Most Recently Added</p>
+            <p className="highlight-subtext">Your latest Playbill</p>
+          </div>
+
+          {/* ── Body: poster + content ── */}
+          <div className="highlight-body">
+            <div className="highlight-poster">🎭</div>
+            <div className="highlight-content">
+              <div className="highlight-title-row">
+                <p className="highlight-title">{mostRecent.musical_title}</p>
+                <Stars rating={mostRecent.rating} />
+              </div>
+              {mostRecent.review_text ? (
+                <p className="highlight-note">{mostRecent.review_text}</p>
+              ) : (
+                <p className="highlight-note highlight-note-empty">No notes yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* ── Footer: date ── */}
+          {mostRecent.date_seen && (
+            <div className="highlight-footer">
+              <p className="highlight-date">Attended {formatDate(mostRecent.date_seen)}</p>
+            </div>
+          )}
         </div>
-        <div className="stat-card">
-          <span className="stat-number">{uniqueShows}</span>
-          <span className="stat-label">Unique Shows</span>
-        </div>
-      </div>
+      )}
 
-      {/* ── Recent Shows ── */}
-      <h3 className="subsection-title">Recently Seen</h3>
+      {/* ── Your Playbills Gallery ── */}
+      <h3 className="subsection-title">Your Playbills</h3>
 
-      {recentShows.length === 0 ? (
+      {sortedYears.length === 0 ? (
         <div className="empty-state">
           <span className="emoji">🎭</span>
-          Your playbill is empty. Time to take your seat!
+          No Playbills yet — log your first show to start your collection.
           <br />
           <Link
             href="/"
             className="btn btn-accent"
             style={{ marginTop: "1rem", display: "inline-block" }}
           >
-            Explore Shows
+            Log a show
           </Link>
         </div>
       ) : (
-        <ul className="seen-list">
-          {recentShows.map((musical) => (
-            <li key={musical.id} className="seen-card">
-              <div>
-                <p className="seen-title">{musical.title}</p>
-                <p className="seen-year">{musical.year}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+        sortedYears.map((year) => (
+          <section key={year} className="gallery-year-group">
+            <h4 className="gallery-year-header">{year}</h4>
+            <div className="gallery-grid">
+              {yearGroups.get(year)!.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/edit/${r.id}`}
+                  className="gallery-tile"
+                >
+                  <div className="gallery-poster">🎭</div>
+                  <div className="gallery-tile-info">
+                    <p className="gallery-tile-title">{r.musical_title}</p>
+                    <Stars rating={r.rating} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))
       )}
     </div>
   );

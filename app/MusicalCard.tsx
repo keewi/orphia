@@ -14,9 +14,9 @@ export default function MusicalCard({ musical }: { musical: Musical }) {
     const supabase = createClient();
 
     async function fetchStatus() {
-      // Get seen count
+      // Get playbill count
       const { count } = await supabase
-        .from("seen_entries")
+        .from("reviews")
         .select("*", { count: "exact", head: true })
         .eq("musical_id", musical.id);
 
@@ -81,14 +81,14 @@ export default function MusicalCard({ musical }: { musical: Musical }) {
       <div className="card-actions">
         {seenCount > 0 && (
           <p className="status-label status-seen">
-            Seen {seenCount} {seenCount === 1 ? "time" : "times"}
+            Collected {seenCount} {seenCount === 1 ? "playbill" : "playbills"}
           </p>
         )}
         {savedForLater && seenCount === 0 && (
           <p className="status-label status-saved">Saved for later</p>
         )}
         <Link href={`/add/${musical.id}`} className="btn btn-accent">
-          Add Experience
+          Add to Playbill
         </Link>
       </div>
     </li>

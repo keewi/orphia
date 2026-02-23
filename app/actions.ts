@@ -38,16 +38,6 @@ export async function addReview(formData: FormData) {
     throw new Error(reviewError.message);
   }
 
-  // Insert seen entry (every review = one viewing)
-  const { error: seenError } = await supabase.from("seen_entries").insert({
-    user_id: user.id,
-    musical_id: musicalId,
-  });
-
-  if (seenError) {
-    throw new Error(seenError.message);
-  }
-
   // Remove from saved-for-later if it was saved
   await supabase
     .from("saved_musicals")

@@ -15,17 +15,8 @@ create policy "Users can read own reviews" on reviews for select using (auth.uid
 create policy "Users can insert own reviews" on reviews for insert with check (auth.uid() = user_id);
 create policy "Users can update own reviews" on reviews for update using (auth.uid() = user_id);
 
--- Seen entries table (one row per viewing)
-create table seen_entries (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) on delete cascade not null,
-  musical_id text not null,
-  created_at timestamptz default now()
-);
-
-alter table seen_entries enable row level security;
-create policy "Users can read own seen" on seen_entries for select using (auth.uid() = user_id);
-create policy "Users can insert own seen" on seen_entries for insert with check (auth.uid() = user_id);
+-- Note: seen_entries table was removed — reviews table now serves as the single source of truth.
+-- If seen_entries still exists in your Supabase instance, it can be safely dropped.
 
 -- Saved-for-later table
 create table saved_musicals (

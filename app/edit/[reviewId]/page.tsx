@@ -28,7 +28,7 @@ export default async function EditReviewPage({
           ← Back to Orphia
         </Link>
         <div className="form-card">
-          <h1>Edit Review: {review.musical_title}</h1>
+          <h1>Edit Playbill Entry: {review.musical_title}</h1>
           <form action={editReview}>
             <input type="hidden" name="reviewId" value={review.id} />
 
@@ -61,7 +61,7 @@ export default async function EditReviewPage({
             </div>
 
             <div className="form-group">
-              <label htmlFor="dateSeen">Date Seen (optional)</label>
+              <label htmlFor="dateSeen">Date Attended (optional)</label>
               <input
                 type="date"
                 id="dateSeen"

@@ -93,7 +93,7 @@ export default function LoginPage() {
           <h1>{isSignUp ? "Create Account" : "Welcome Back"}</h1>
           <p className="login-subtitle">
             {isSignUp
-              ? "Sign up to start tracking your theatre experiences"
+              ? "Sign up to start building your playbill collection"
               : "Sign in to your Orphia account"}
           </p>
 
