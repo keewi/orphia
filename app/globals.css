@@ -47,7 +47,7 @@
 }
 
 html {
-  color-scheme: dark;
+  background: var(--bg);
 }
 
 html,
@@ -214,7 +214,6 @@ body {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
-  animation: fadeInUp 0.4s ease-out;
 }
 
 /* ── Section headings ── */
@@ -312,7 +311,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
   padding: 0;
   z-index: 1;
 }
@@ -375,7 +374,7 @@ body {
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  transition: background 0.2s ease;
 }
 
 .btn-accent {
@@ -387,8 +386,6 @@ body {
 
 .btn-accent:hover {
   background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-  transform: scale(1.03);
-  box-shadow: 0 0 18px var(--gold-glow);
 }
 
 .btn-submit {
@@ -407,8 +404,6 @@ body {
 
 .btn-submit:hover {
   background: linear-gradient(135deg, var(--accent-hover), var(--accent-soft));
-  transform: scale(1.03);
-  box-shadow: 0 0 18px var(--gold-glow);
 }
 
 .btn-edit {
@@ -924,6 +919,23 @@ body {
   background: rgba(244, 197, 66, 0.08);
 }
 
+.account-email {
+  padding: 0.5rem 0.9rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.account-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 0.15rem 0;
+}
+
 /* ── Profile Opener ── */
 
 .profile-opener {
@@ -1075,13 +1087,11 @@ body {
   border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
   overflow: hidden;
-  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  transition: box-shadow 0.25s ease;
 }
 
 .gallery-tile:hover {
   box-shadow: var(--shadow-hover), 0 0 14px var(--gold-glow);
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .gallery-poster {

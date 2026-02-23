@@ -21,7 +21,6 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  colorScheme: "dark",
 };
 
 export const metadata: Metadata = {
@@ -35,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`} style={{ backgroundColor: "#0F0E12" }}>
       <body style={{ backgroundColor: "#0F0E12" }}>
         <header className="site-header">
           <div className="header-content">

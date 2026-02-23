@@ -14,7 +14,16 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user email on mount
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null);
+    });
+  }, []);
 
   // Close menu on click outside
   useEffect(() => {
@@ -86,6 +95,12 @@ export default function Navigation() {
 
         {menuOpen && (
           <div className="account-dropdown">
+            {userEmail && (
+              <>
+                <p className="account-email">{userEmail}</p>
+                <hr className="account-divider" />
+              </>
+            )}
             <button type="button" onClick={handleSignOut}>
               Sign Out
             </button>
