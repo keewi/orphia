@@ -43,7 +43,7 @@ export default function RootLayout({
                 <span className="brand-accent">Orphia</span>
               </Link>
             </h1>
-            <p className="tagline">Your seat in the spotlight</p>
+            <p className="tagline">Remember every curtain call</p>
           </div>
           <Navigation />
         </header>

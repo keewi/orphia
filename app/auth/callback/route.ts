@@ -9,10 +9,10 @@ export async function GET(request: Request) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}/`);
+      return NextResponse.redirect(`${origin}/auth/confirmed`);
     }
   }
 
-  // If there's no code or exchange failed, redirect to login
-  return NextResponse.redirect(`${origin}/login`);
+  // If there's no code or exchange failed, show error page
+  return NextResponse.redirect(`${origin}/auth/error`);
 }

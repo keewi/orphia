@@ -400,6 +400,10 @@ body {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+}
+
+/* Full-width buttons only on login page */
+.login-container .btn-submit {
   width: 100%;
 }
 
@@ -745,49 +749,6 @@ body {
   color: var(--text-muted);
   font-size: 0.9rem;
   font-style: italic;
-}
-
-/* ══════════════════════════════════════════════
-   SEEN MUSICALS LIST (My Collection)
-   ══════════════════════════════════════════════ */
-
-.seen-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.seen-card {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  box-shadow: var(--shadow);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
-  border: 1px solid var(--border-subtle);
-}
-
-.seen-card:hover {
-  box-shadow: var(--shadow-hover), 0 0 12px var(--gold-glow);
-  transform: translateY(-1px);
-}
-
-.seen-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0;
-}
-
-.seen-year {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 0.15rem 0 0;
 }
 
 /* ══════════════════════════════════════════════

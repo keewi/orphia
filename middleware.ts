@@ -10,8 +10,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow auth callback through without auth check (email confirmation flow)
-  if (request.nextUrl.pathname.startsWith("/auth/callback")) {
+  // Allow all auth routes through without auth check (callback, confirmed, error)
+  if (request.nextUrl.pathname.startsWith("/auth/")) {
     return NextResponse.next();
   }
 
