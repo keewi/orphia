@@ -253,14 +253,12 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  transition: box-shadow 0.3s ease;
   border: 1px solid var(--border-subtle);
 }
 
 .musical-card:hover {
   box-shadow: var(--shadow-hover), 0 0 18px var(--gold-glow);
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .musical-card .title {
