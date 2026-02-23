@@ -30,7 +30,7 @@ export default function AddReviewPage({
               ({musical.year})
             </span>
           </h1>
-          <ExperienceForm musicalId={musical.id} action={addReview}>
+          <ExperienceForm action={addReview}>
             <input type="hidden" name="musicalId" value={musical.id} />
 
             <div className="form-group">

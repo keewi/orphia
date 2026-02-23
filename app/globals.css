@@ -400,6 +400,7 @@ body {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+  width: 100%;
 }
 
 .btn-submit:hover {
@@ -860,4 +861,111 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.18);
+}
+
+/* ══════════════════════════════════════════════
+   LOGIN PAGE
+   ══════════════════════════════════════════════ */
+
+.login-container {
+  max-width: 420px;
+  margin: 2rem auto;
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: -0.75rem 0 1.5rem;
+}
+
+.login-error {
+  color: #ef4444;
+  font-size: 0.88rem;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.login-toggle {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.login-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+
+.login-toggle-btn:hover {
+  color: var(--accent-hover);
+}
+
+/* Email/password/text inputs (login + forms) */
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--surface-secondary);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus,
+.form-group input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(244, 197, 66, 0.15);
+}
+
+.form-group input[type="email"]::placeholder,
+.form-group input[type="password"]::placeholder,
+.form-group input[type="text"]::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* ── Sign-out button ── */
+
+.btn-signout {
+  background: none;
+  border: none;
+  color: rgba(246, 242, 232, 0.4);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.btn-signout:hover {
+  color: var(--accent);
+  background: rgba(244, 197, 66, 0.06);
+}
+
+/* Disabled button state */
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }

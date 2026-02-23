@@ -3,90 +3,62 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { Musical } from "@/data/musicals";
-
-/* ── Seen-entries store (multiple "seen" entries per musical) ── */
-const ENTRIES_KEY = "musical-entries";
-
-export interface SeenEntryRecord {
-  musicalId: string;
-  status: "seen";
-  timestamp: number;
-}
-
-export function readAllEntries(): SeenEntryRecord[] {
-  try {
-    const raw = localStorage.getItem(ENTRIES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function addSeenEntry(musicalId: string): SeenEntryRecord[] {
-  const entries = readAllEntries();
-  entries.push({ musicalId, status: "seen", timestamp: Date.now() });
-  try {
-    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-  } catch {
-    // localStorage unavailable — silently ignore
-  }
-  return entries;
-}
-
-function countForMusical(entries: SeenEntryRecord[], musicalId: string): number {
-  return entries.filter((e) => e.musicalId === musicalId && e.status === "seen").length;
-}
-
-/* ── Saved-for-later store ── */
-const SAVED_KEY = "musical-saved";
-
-function readAllSaved(): Record<string, true> {
-  try {
-    const raw = localStorage.getItem(SAVED_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function writeSaved(musicalId: string, saved: boolean) {
-  try {
-    const all = readAllSaved();
-    if (saved) {
-      all[musicalId] = true;
-    } else {
-      delete all[musicalId];
-    }
-    localStorage.setItem(SAVED_KEY, JSON.stringify(all));
-  } catch {
-    // localStorage unavailable — silently ignore
-  }
-}
+import { createClient } from "@/lib/supabase/client";
 
 export default function MusicalCard({ musical }: { musical: Musical }) {
   const [savedForLater, setSavedForLater] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from Supabase on mount
   useEffect(() => {
-    const entries = readAllEntries();
-    const count = countForMusical(entries, musical.id);
-    setSeenCount(count);
+    const supabase = createClient();
 
-    const isSaved = !!readAllSaved()[musical.id];
-    // Defensive: a musical with seen entries should never be saved-for-later
-    if (count > 0 && isSaved) {
-      writeSaved(musical.id, false);
-      setSavedForLater(false);
-    } else {
-      setSavedForLater(isSaved);
+    async function fetchStatus() {
+      // Get seen count
+      const { count } = await supabase
+        .from("seen_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("musical_id", musical.id);
+
+      const seen = count ?? 0;
+      setSeenCount(seen);
+
+      // Get saved status (only matters if not seen)
+      if (seen === 0) {
+        const { data } = await supabase
+          .from("saved_musicals")
+          .select("id")
+          .eq("musical_id", musical.id)
+          .maybeSingle();
+
+        setSavedForLater(!!data);
+      }
     }
+
+    fetchStatus();
   }, [musical.id]);
 
-  const handleToggleSaved = useCallback(() => {
+  const handleToggleSaved = useCallback(async () => {
+    const supabase = createClient();
     const next = !savedForLater;
     setSavedForLater(next);
-    writeSaved(musical.id, next);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (next) {
+      await supabase
+        .from("saved_musicals")
+        .insert({ musical_id: musical.id, user_id: user.id });
+    } else {
+      await supabase
+        .from("saved_musicals")
+        .delete()
+        .eq("musical_id", musical.id)
+        .eq("user_id", user.id);
+    }
   }, [savedForLater, musical.id]);
 
   return (

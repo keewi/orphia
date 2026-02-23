@@ -1,64 +1,39 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { musicals } from "@/data/musicals";
 import type { Musical } from "@/data/musicals";
-import { readAllEntries } from "@/app/MusicalCard";
-import type { SeenEntryRecord } from "@/app/MusicalCard";
+import { createClient } from "@/lib/supabase/server";
 
-interface TheatreData {
-  seenCount: number;
-  uniqueShows: number;
-  recentShows: Musical[];
-}
+export const dynamic = "force-dynamic";
 
-function readTheatreData(): TheatreData {
-  try {
-    const entries: SeenEntryRecord[] = readAllEntries();
-    if (entries.length === 0) {
-      return { seenCount: 0, uniqueShows: 0, recentShows: [] };
-    }
+export default async function MyTheatreLife() {
+  const supabase = createClient();
 
-    const seenEntries = entries.filter((e) => e.status === "seen");
-    const seenCount = seenEntries.length;
+  // Get all seen entries
+  const { data: entries } = await supabase
+    .from("seen_entries")
+    .select("musical_id, created_at")
+    .order("created_at", { ascending: false });
 
-    // Track unique musical IDs and their latest timestamp
-    const latestMap = new Map<string, number>();
-    for (const entry of seenEntries) {
-      const prev = latestMap.get(entry.musicalId) ?? 0;
-      if (entry.timestamp > prev) {
-        latestMap.set(entry.musicalId, entry.timestamp);
+  const seenCount = entries?.length ?? 0;
+
+  // Compute unique shows and recent list
+  const latestMap = new Map<string, string>();
+  if (entries) {
+    for (const entry of entries) {
+      if (!latestMap.has(entry.musical_id)) {
+        latestMap.set(entry.musical_id, entry.created_at);
       }
     }
-
-    const uniqueShows = latestMap.size;
-    const musicalMap = new Map(musicals.map((m) => [m.id, m]));
-
-    // Sort by most-recently-seen first
-    const recentShows = Array.from(latestMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => musicalMap.get(id))
-      .filter((m): m is Musical => m !== undefined);
-
-    return { seenCount, uniqueShows, recentShows };
-  } catch {
-    return { seenCount: 0, uniqueShows: 0, recentShows: [] };
   }
-}
 
-export default function MyTheatreLife() {
-  const [data, setData] = useState<TheatreData>({
-    seenCount: 0,
-    uniqueShows: 0,
-    recentShows: [],
-  });
-  const [loaded, setLoaded] = useState(false);
+  const uniqueShows = latestMap.size;
+  const musicalMap = new Map(musicals.map((m) => [m.id, m]));
 
-  useEffect(() => {
-    setData(readTheatreData());
-    setLoaded(true);
-  }, []);
+  // Sort by most-recently-seen first
+  const recentShows: Musical[] = Array.from(latestMap.entries())
+    .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+    .map(([id]) => musicalMap.get(id))
+    .filter((m): m is Musical => m !== undefined);
 
   return (
     <div className="page-container">
@@ -67,11 +42,11 @@ export default function MyTheatreLife() {
       {/* ── Hero Stats ── */}
       <div className="hero-stats">
         <div className="stat-card">
-          <span className="stat-number">{loaded ? data.seenCount : "—"}</span>
+          <span className="stat-number">{seenCount}</span>
           <span className="stat-label">Shows Seen</span>
         </div>
         <div className="stat-card">
-          <span className="stat-number">{loaded ? data.uniqueShows : "—"}</span>
+          <span className="stat-number">{uniqueShows}</span>
           <span className="stat-label">Unique Shows</span>
         </div>
       </div>
@@ -79,7 +54,7 @@ export default function MyTheatreLife() {
       {/* ── Recent Shows ── */}
       <h3 className="subsection-title">Recently Seen</h3>
 
-      {!loaded ? null : data.recentShows.length === 0 ? (
+      {recentShows.length === 0 ? (
         <div className="empty-state">
           <span className="emoji">🎭</span>
           Your playbill is empty. Time to take your seat!
@@ -94,7 +69,7 @@ export default function MyTheatreLife() {
         </div>
       ) : (
         <ul className="seen-list">
-          {data.recentShows.map((musical) => (
+          {recentShows.map((musical) => (
             <li key={musical.id} className="seen-card">
               <div>
                 <p className="seen-title">{musical.title}</p>

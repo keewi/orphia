@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { musicals } from "@/data/musicals";
-import { reviews } from "@/data/reviews";
+import { createClient } from "@/lib/supabase/server";
 import SearchableMusicalGrid from "./SearchableMusicalGrid";
 
 export const dynamic = "force-dynamic";
+
+interface Review {
+  id: string;
+  musical_id: string;
+  musical_title: string;
+  rating: number;
+  review_text: string;
+  date_seen: string | null;
+}
 
 function Stars({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -18,24 +27,32 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createClient();
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const reviewList: Review[] = reviews ?? [];
+
   return (
     <div className="page-container">
       <h2 className="section-title">Explore Shows</h2>
       <SearchableMusicalGrid musicals={musicals} />
 
       <h2 className="section-title">My Reviews</h2>
-      {reviews.length === 0 ? (
+      {reviewList.length === 0 ? (
         <div className="empty-state">
           <span className="emoji">🎭</span>
           No reviews yet — discover a show above and write your first review!
         </div>
       ) : (
         <ul className="review-list">
-          {reviews.map((r) => (
+          {reviewList.map((r) => (
             <li key={r.id} className="review-card">
               <div className="review-header">
-                <p className="review-title">{r.musicalTitle}</p>
+                <p className="review-title">{r.musical_title}</p>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                   <Stars rating={r.rating} />
                   <Link href={`/edit/${r.id}`} className="btn btn-edit">
@@ -43,9 +60,9 @@ export default function Home() {
                   </Link>
                 </div>
               </div>
-              <p className="review-text">{r.reviewText}</p>
-              {r.dateSeen && (
-                <p className="review-date">Seen on {r.dateSeen}</p>
+              <p className="review-text">{r.review_text}</p>
+              {r.date_seen && (
+                <p className="review-date">Seen on {r.date_seen}</p>
               )}
             </li>
           ))}

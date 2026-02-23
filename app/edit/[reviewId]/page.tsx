@@ -1,16 +1,21 @@
 import { notFound } from "next/navigation";
-import { reviews } from "@/data/reviews";
 import { editReview } from "@/app/actions";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 const ratingOptions = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
-export default function EditReviewPage({
+export default async function EditReviewPage({
   params,
 }: {
   params: { reviewId: string };
 }) {
-  const review = reviews.find((r) => r.id === params.reviewId);
+  const supabase = createClient();
+  const { data: review } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("id", params.reviewId)
+    .single();
 
   if (!review) {
     notFound();
@@ -23,7 +28,7 @@ export default function EditReviewPage({
           ← Back to Orphia
         </Link>
         <div className="form-card">
-          <h1>Edit Review: {review.musicalTitle}</h1>
+          <h1>Edit Review: {review.musical_title}</h1>
           <form action={editReview}>
             <input type="hidden" name="reviewId" value={review.id} />
 
@@ -50,7 +55,7 @@ export default function EditReviewPage({
               <textarea
                 id="reviewText"
                 name="reviewText"
-                defaultValue={review.reviewText}
+                defaultValue={review.review_text}
                 required
               />
             </div>
@@ -61,7 +66,7 @@ export default function EditReviewPage({
                 type="date"
                 id="dateSeen"
                 name="dateSeen"
-                defaultValue={review.dateSeen ?? ""}
+                defaultValue={review.date_seen ?? ""}
               />
             </div>
 
