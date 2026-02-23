@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { musicals } from "@/data/musicals";
 import { createClient } from "@/lib/supabase/server";
 
 export async function addReview(formData: FormData) {
@@ -10,12 +9,18 @@ export async function addReview(formData: FormData) {
   const reviewText = formData.get("reviewText") as string;
   const dateSeen = (formData.get("dateSeen") as string) || null;
 
-  const musical = musicals.find((m) => m.id === musicalId);
+  const supabase = createClient();
+
+  // Look up musical title from Supabase
+  const { data: musical } = await supabase
+    .from("musicals")
+    .select("title")
+    .eq("id", musicalId)
+    .single();
+
   if (!musical) {
     throw new Error("Musical not found");
   }
-
-  const supabase = createClient();
 
   const {
     data: { user },

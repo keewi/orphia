@@ -1,7 +1,18 @@
-import { musicals } from "@/data/musicals";
+import { createClient } from "@/lib/supabase/server";
+import type { Musical } from "@/lib/types";
 import SearchableMusicalGrid from "./SearchableMusicalGrid";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("musicals")
+    .select("id, title, year, description")
+    .order("title");
+
+  const musicals: Musical[] = data ?? [];
+
   return (
     <div className="page-container">
       <h2 className="section-title">Explore Shows</h2>

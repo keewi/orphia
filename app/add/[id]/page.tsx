@@ -1,17 +1,22 @@
 import { notFound } from "next/navigation";
-import { musicals } from "@/data/musicals";
+import { createClient } from "@/lib/supabase/server";
 import { addReview } from "@/app/actions";
 import Link from "next/link";
 import ExperienceForm from "@/app/ExperienceForm";
 
 const ratingOptions = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
-export default function AddReviewPage({
+export default async function AddReviewPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const musical = musicals.find((m) => m.id === params.id);
+  const supabase = createClient();
+  const { data: musical } = await supabase
+    .from("musicals")
+    .select("id, title, year, description")
+    .eq("id", params.id)
+    .single();
 
   if (!musical) {
     notFound();

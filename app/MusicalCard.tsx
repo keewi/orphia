@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import type { Musical } from "@/data/musicals";
+import type { Musical } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 
 export default function MusicalCard({ musical }: { musical: Musical }) {

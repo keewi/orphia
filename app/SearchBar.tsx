@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { Musical } from "@/data/musicals";
+import type { Musical } from "@/lib/types";
 
 function highlightMatch(title: string, query: string) {
   if (!query) return title;

@@ -1,3 +1,15 @@
+-- Musicals catalog (public, read-only)
+create table musicals (
+  id text primary key,
+  title text not null,
+  year integer not null,
+  description text not null,
+  created_at timestamptz default now()
+);
+
+alter table musicals enable row level security;
+create policy "Musicals are publicly readable" on musicals for select using (true);
+
 -- Reviews table
 create table reviews (
   id uuid default gen_random_uuid() primary key,

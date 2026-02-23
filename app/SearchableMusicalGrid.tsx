@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Musical } from "@/data/musicals";
+import type { Musical } from "@/lib/types";
 import SearchBar from "./SearchBar";
 import MusicalCard from "./MusicalCard";
 
