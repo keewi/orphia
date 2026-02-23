@@ -3,4 +3,5 @@ export interface Musical {
   title: string;
   year: number;
   description: string;
+  image_url: string | null;
 }

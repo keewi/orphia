@@ -254,10 +254,55 @@ body {
   justify-content: space-between;
   transition: box-shadow 0.3s ease;
   border: 1px solid var(--border-subtle);
+  overflow: hidden;
 }
 
 .musical-card:hover {
   box-shadow: var(--shadow-hover), 0 0 18px var(--gold-glow);
+}
+
+/* ── Musical Card with Poster Background ── */
+
+.musical-card--has-image {
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-clip: padding-box;
+  min-height: 300px;
+}
+
+.musical-card__overlay {
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 14, 18, 0.25) 0%,
+    rgba(15, 14, 18, 0.6) 40%,
+    rgba(15, 14, 18, 0.92) 70%,
+    rgba(15, 14, 18, 0.98) 100%
+  );
+  pointer-events: none;
+}
+
+.musical-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.musical-card--has-image .title {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.musical-card--has-image .description {
+  color: rgba(246, 242, 232, 0.8);
+}
+
+.musical-card--has-image .year {
+  color: rgba(246, 242, 232, 0.65);
 }
 
 .musical-card .title {
@@ -1095,6 +1140,7 @@ body {
 }
 
 .gallery-poster {
+  position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
   background: linear-gradient(135deg, var(--velvet), var(--burgundy));
@@ -1103,6 +1149,20 @@ body {
   justify-content: center;
   font-size: 2.5rem;
   line-height: 1;
+  overflow: hidden;
+}
+
+.gallery-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.highlight-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 .gallery-tile-info {

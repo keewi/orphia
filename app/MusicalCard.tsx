@@ -62,34 +62,44 @@ export default function MusicalCard({ musical }: { musical: Musical }) {
   }, [savedForLater, musical.id]);
 
   return (
-    <li className="musical-card">
-      {seenCount === 0 && (
-        <button
-          type="button"
-          className={`btn-save-toggle${savedForLater ? " btn-save-active" : ""}`}
-          onClick={handleToggleSaved}
-          aria-label={savedForLater ? "Remove from saved" : "Save for later"}
-        >
-          {savedForLater ? "\u2713" : "+"}
-        </button>
-      )}
-      <div>
-        <p className="title">{musical.title}</p>
-        <p className="year">{musical.year}</p>
-        <p className="description">{musical.description}</p>
-      </div>
-      <div className="card-actions">
-        {seenCount > 0 && (
-          <p className="status-label status-seen">
-            Collected {seenCount} {seenCount === 1 ? "playbill" : "playbills"}
-          </p>
+    <li
+      className={`musical-card${musical.image_url ? " musical-card--has-image" : ""}`}
+      style={
+        musical.image_url
+          ? { backgroundImage: `url(${musical.image_url})` }
+          : undefined
+      }
+    >
+      {musical.image_url && <div className="musical-card__overlay" />}
+      <div className="musical-card__content">
+        {seenCount === 0 && (
+          <button
+            type="button"
+            className={`btn-save-toggle${savedForLater ? " btn-save-active" : ""}`}
+            onClick={handleToggleSaved}
+            aria-label={savedForLater ? "Remove from saved" : "Save for later"}
+          >
+            {savedForLater ? "\u2713" : "+"}
+          </button>
         )}
-        {savedForLater && seenCount === 0 && (
-          <p className="status-label status-saved">Saved for later</p>
-        )}
-        <Link href={`/add/${musical.id}`} className="btn btn-accent">
-          Add to Playbill
-        </Link>
+        <div>
+          <p className="title">{musical.title}</p>
+          <p className="year">{musical.year}</p>
+          <p className="description">{musical.description}</p>
+        </div>
+        <div className="card-actions">
+          {seenCount > 0 && (
+            <p className="status-label status-seen">
+              Collected {seenCount} {seenCount === 1 ? "playbill" : "playbills"}
+            </p>
+          )}
+          {savedForLater && seenCount === 0 && (
+            <p className="status-label status-saved">Saved for later</p>
+          )}
+          <Link href={`/add/${musical.id}`} className="btn btn-accent">
+            Add to Playbill
+          </Link>
+        </div>
       </div>
     </li>
   );

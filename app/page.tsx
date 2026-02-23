@@ -8,7 +8,7 @@ export default async function Home() {
   const supabase = createClient();
   const { data } = await supabase
     .from("musicals")
-    .select("id, title, year, description")
+    .select("id, title, year, description, image_url")
     .order("title");
 
   const musicals: Musical[] = data ?? [];

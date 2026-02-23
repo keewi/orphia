@@ -14,7 +14,7 @@ export default async function AddReviewPage({
   const supabase = createClient();
   const { data: musical } = await supabase
     .from("musicals")
-    .select("id, title, year, description")
+    .select("id, title, year, description, image_url")
     .eq("id", params.id)
     .single();
 

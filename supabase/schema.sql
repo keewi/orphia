@@ -4,6 +4,7 @@ create table musicals (
   title text not null,
   year integer not null,
   description text not null,
+  image_url text,
   created_at timestamptz default now()
 );
 
