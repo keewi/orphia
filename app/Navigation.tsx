@@ -15,13 +15,25 @@ export default function Navigation() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userHandle, setUserHandle] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user email on mount
+  // Fetch user email and handle on mount
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email ?? null);
+      const user = data.user;
+      setUserEmail(user?.email ?? null);
+      if (user) {
+        supabase
+          .from("profiles")
+          .select("handle")
+          .eq("id", user.id)
+          .maybeSingle()
+          .then(({ data: profile }) => {
+            setUserHandle(profile?.handle ?? null);
+          });
+      }
     });
   }, []);
 
@@ -46,12 +58,14 @@ export default function Navigation() {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    // Clear cached handle cookie so next sign-in re-checks
+    document.cookie = "x-has-handle=; path=/; max-age=0";
     router.push("/login");
     router.refresh();
   }
 
-  // Don't show navigation on the login page
-  if (pathname === "/login") {
+  // Don't show navigation on the login or choose-handle pages
+  if (pathname === "/login" || pathname === "/choose-handle") {
     return null;
   }
 
@@ -98,6 +112,17 @@ export default function Navigation() {
             {userEmail && (
               <>
                 <p className="account-email">{userEmail}</p>
+                <hr className="account-divider" />
+              </>
+            )}
+            {userHandle && (
+              <>
+                <Link href={`/u/${userHandle}`} className="account-dropdown-link">
+                  My Profile
+                </Link>
+                <Link href="/find-friends" className="account-dropdown-link">
+                  Find Friends
+                </Link>
                 <hr className="account-divider" />
               </>
             )}

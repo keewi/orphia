@@ -1193,3 +1193,183 @@ body {
   cursor: not-allowed;
   transform: none;
 }
+
+/* ══════════════════════════════════════════════
+   PUBLIC PROFILE
+   ══════════════════════════════════════════════ */
+
+.profile-header {
+  margin-bottom: 1.5rem;
+}
+
+.profile-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.profile-display-name {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.profile-handle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+}
+
+.profile-follow-counts {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.profile-follow-counts strong {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ── Follow Button ── */
+
+.btn-follow {
+  display: inline-block;
+  padding: 0.45rem 1.4rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0F0E12;
+  background: var(--accent);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-follow:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-following {
+  display: inline-block;
+  padding: 0.45rem 1.4rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  min-width: 100px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-following:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ── Handle Input with @ Prefix ── */
+
+.handle-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.handle-prefix {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.handle-input-wrapper input {
+  padding-left: 1.75rem !important;
+}
+
+/* ── Handle Validation Feedback ── */
+
+.handle-error {
+  color: #ef4444;
+  font-size: 0.82rem;
+  margin: 0.35rem 0 0;
+}
+
+.handle-available {
+  color: #22c55e;
+  font-size: 0.82rem;
+  margin: 0.35rem 0 0;
+}
+
+.handle-checking {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin: 0.35rem 0 0;
+}
+
+/* ── Find Friends ── */
+
+.find-friends-container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.find-friends-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(244, 197, 66, 0.06);
+  border: 1px solid rgba(244, 197, 66, 0.15);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.find-friends-cta:hover {
+  background: rgba(244, 197, 66, 0.1);
+  border-color: rgba(244, 197, 66, 0.25);
+}
+
+.find-friends-cta-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+}
+
+/* ── Account dropdown links ── */
+
+.account-dropdown-link {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  color: rgba(246, 242, 232, 0.6);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+}
+
+.account-dropdown-link:hover {
+  color: var(--accent);
+  background: rgba(244, 197, 66, 0.08);
+}

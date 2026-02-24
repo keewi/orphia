@@ -11,20 +11,15 @@ export async function addReview(formData: FormData) {
 
   const supabase = createClient();
 
-  // Look up musical title from Supabase
-  const { data: musical } = await supabase
-    .from("musicals")
-    .select("title")
-    .eq("id", musicalId)
-    .single();
+  // Fetch musical title and auth in parallel
+  const [{ data: musical }, { data: { user } }] = await Promise.all([
+    supabase.from("musicals").select("title").eq("id", musicalId).single(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!musical) {
     throw new Error("Musical not found");
   }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("Not authenticated");
   }

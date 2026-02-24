@@ -7,8 +7,10 @@ import MusicalCard from "./MusicalCard";
 
 export default function SearchableMusicalGrid({
   musicals,
+  statusMap,
 }: {
   musicals: Musical[];
+  statusMap: Record<string, { seenCount: number; savedForLater: boolean }>;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -29,7 +31,12 @@ export default function SearchableMusicalGrid({
       ) : (
         <ul className="musical-grid">
           {filteredMusicals.map((m) => (
-            <MusicalCard key={m.id} musical={m} />
+            <MusicalCard
+              key={m.id}
+              musical={m}
+              initialSeenCount={statusMap[m.id]?.seenCount ?? 0}
+              initialSavedForLater={statusMap[m.id]?.savedForLater ?? false}
+            />
           ))}
         </ul>
       )}

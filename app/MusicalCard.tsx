@@ -1,42 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Musical } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 
-export default function MusicalCard({ musical }: { musical: Musical }) {
-  const [savedForLater, setSavedForLater] = useState(false);
-  const [seenCount, setSeenCount] = useState(0);
-
-  // Hydrate from Supabase on mount
-  useEffect(() => {
-    const supabase = createClient();
-
-    async function fetchStatus() {
-      // Get playbill count
-      const { count } = await supabase
-        .from("reviews")
-        .select("*", { count: "exact", head: true })
-        .eq("musical_id", musical.id);
-
-      const seen = count ?? 0;
-      setSeenCount(seen);
-
-      // Get saved status (only matters if not seen)
-      if (seen === 0) {
-        const { data } = await supabase
-          .from("saved_musicals")
-          .select("id")
-          .eq("musical_id", musical.id)
-          .maybeSingle();
-
-        setSavedForLater(!!data);
-      }
-    }
-
-    fetchStatus();
-  }, [musical.id]);
+export default function MusicalCard({
+  musical,
+  initialSeenCount = 0,
+  initialSavedForLater = false,
+}: {
+  musical: Musical;
+  initialSeenCount?: number;
+  initialSavedForLater?: boolean;
+}) {
+  const [savedForLater, setSavedForLater] = useState(initialSavedForLater);
+  const [seenCount] = useState(initialSeenCount);
 
   const handleToggleSaved = useCallback(async () => {
     const supabase = createClient();
