@@ -15,12 +15,22 @@ export default async function PublicProfilePage({
 }) {
   const supabase = createClient();
 
-  // Fetch profile by handle (must be first for notFound check)
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name")
-    .eq("handle", params.handle)
-    .maybeSingle();
+  // Detect UUID vs handle — UUIDs contain hyphens, handles never do
+  const param = params.handle;
+  const isUUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
+
+  const { data: profile } = isUUID
+    ? await supabase
+        .from("profiles")
+        .select("id, handle, display_name")
+        .eq("id", param)
+        .maybeSingle()
+    : await supabase
+        .from("profiles")
+        .select("id, handle, display_name")
+        .eq("handle", param)
+        .maybeSingle();
 
   if (!profile) {
     notFound();

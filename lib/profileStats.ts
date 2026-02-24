@@ -41,3 +41,10 @@ export function deriveProfileStats(reviews: ReviewRow[]): ProfileStats {
 
   return { seenCount, sinceYear, uniqueShows };
 }
+
+export function formatHeroStatement(stats: ProfileStats): string | null {
+  if (stats.seenCount === 0 || !stats.sinceYear) return null;
+  const playbills = stats.seenCount === 1 ? "playbill" : "playbills";
+  const shows = stats.uniqueShows === 1 ? "show" : "shows";
+  return `${stats.seenCount} ${playbills} collected since ${stats.sinceYear} · ${stats.uniqueShows} unique ${shows}`;
+}

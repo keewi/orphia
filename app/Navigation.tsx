@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { label: "Explore", href: "/" },
   { label: "My Playbills", href: "/my-theatre-life" },
+  { label: "Following", href: "/following" },
 ];
 
 export default function Navigation() {

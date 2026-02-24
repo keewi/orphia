@@ -1373,3 +1373,53 @@ body {
   color: var(--accent);
   background: rgba(244, 197, 66, 0.08);
 }
+
+/* ══════════════════════════════════════════════
+   FOLLOWING PAGE
+   ══════════════════════════════════════════════ */
+
+.following-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 0;
+  margin: 0 0 2.5rem;
+}
+
+.following-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.3s ease;
+}
+
+.following-card:hover {
+  box-shadow: var(--shadow-hover), 0 0 18px var(--gold-glow);
+}
+
+.following-card-name {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.following-card-handle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.following-card-hero {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.35rem 0 0;
+}
