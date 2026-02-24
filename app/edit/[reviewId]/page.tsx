@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { editReview } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -11,10 +11,15 @@ export default async function EditReviewPage({
   params: { reviewId: string };
 }) {
   const supabase = createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const { data: review } = await supabase
     .from("reviews")
     .select("*")
     .eq("id", params.reviewId)
+    .eq("user_id", user.id)
     .single();
 
   if (!review) {

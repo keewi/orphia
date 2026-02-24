@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deriveProfileStats } from "@/lib/profileStats";
 import { Stars } from "@/app/ReviewCards";
@@ -17,10 +18,14 @@ function formatDate(dateStr: string) {
 export default async function MyTheatreLife() {
   const supabase = createClient();
 
-  // Get all reviews
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // Get current user's reviews only
   const { data: reviews } = await supabase
     .from("reviews")
     .select("id, musical_id, musical_title, rating, review_text, date_seen, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   const { seenCount, sinceYear, uniqueShows } = deriveProfileStats(reviews ?? []);

@@ -7,14 +7,18 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const supabase = createClient();
 
-  // Batch-fetch musicals + user's review counts + saved statuses in parallel
+  // Get user first (fast JWT check), then batch-fetch with proper scoping
+  const { data: { user } } = await supabase.auth.getUser();
+
   const [{ data }, { data: reviewRows }, { data: savedRows }] =
     await Promise.all([
       supabase
         .from("musicals")
         .select("id, title, year, description, image_url")
         .order("title"),
-      supabase.from("reviews").select("musical_id"),
+      user
+        ? supabase.from("reviews").select("musical_id").eq("user_id", user.id)
+        : Promise.resolve({ data: [] as { musical_id: string }[] }),
       supabase.from("saved_musicals").select("musical_id"),
     ]);
 
