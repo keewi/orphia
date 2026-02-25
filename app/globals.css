@@ -1416,6 +1416,39 @@ body {
    FOLLOWING PAGE
    ══════════════════════════════════════════════ */
 
+.following-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.following-header .section-title {
+  margin: 0;
+}
+
+.following-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.following-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(244, 197, 66, 0.12);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .following-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1425,6 +1458,7 @@ body {
 }
 
 .following-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -1435,11 +1469,40 @@ body {
   box-shadow: var(--shadow);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  animation: fadeInUp 0.4s ease both;
 }
 
 .following-card:hover {
   box-shadow: var(--shadow-hover), 0 0 18px var(--gold-glow);
+  border-color: rgba(244, 197, 66, 0.15);
+  transform: translateY(-2px);
+}
+
+.following-card-badge {
+  position: absolute;
+  top: 0.85rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  line-height: 1;
+}
+
+.following-card-badge-count {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.following-card-badge-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .following-card-name {
@@ -1450,16 +1513,13 @@ body {
   margin: 0;
 }
 
-.following-card-handle {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
 .following-card-hero {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
-  margin: 0.35rem 0 0;
+  margin: 0.5rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  line-height: 1.4;
 }
 
 /* ══════════════════════════════════════════════

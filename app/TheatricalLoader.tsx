@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const THEATRICAL_COPY = [
   "Dimming the house lights\u2026",
@@ -181,9 +181,18 @@ export default function TheatricalLoader({
   variant: Variant;
   showMicrocopy?: boolean;
 }) {
-  const [phrase] = useState(
-    () => THEATRICAL_COPY[Math.floor(Math.random() * THEATRICAL_COPY.length)],
+  const [phraseIndex, setPhraseIndex] = useState(
+    () => Math.floor(Math.random() * THEATRICAL_COPY.length),
   );
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % THEATRICAL_COPY.length);
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const phrase = THEATRICAL_COPY[phraseIndex];
 
   const Skeleton = VARIANTS[variant];
 

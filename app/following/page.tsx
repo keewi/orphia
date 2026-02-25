@@ -5,6 +5,18 @@ import { deriveProfileStats, formatHeroStatement } from "@/lib/profileStats";
 
 export const dynamic = "force-dynamic";
 
+const FindFriendsCTA = () => (
+  <Link href="/find-friends" className="find-friends-cta">
+    <span className="find-friends-cta-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </span>
+    Find friends on Orphia
+  </Link>
+);
+
 export default async function FollowingPage() {
   const supabase = createClient();
 
@@ -22,7 +34,10 @@ export default async function FollowingPage() {
   if (followError) {
     return (
       <div className="page-container">
-        <h2 className="section-title">Following</h2>
+        <div className="following-header">
+          <h2 className="section-title">Following</h2>
+          <FindFriendsCTA />
+        </div>
         <div className="empty-state">
           <span className="emoji">&#9888;&#65039;</span>
           Something went wrong loading your follows.
@@ -45,7 +60,9 @@ export default async function FollowingPage() {
   if (followedUserIds.length === 0) {
     return (
       <div className="page-container">
-        <h2 className="section-title">Following</h2>
+        <div className="following-header">
+          <h2 className="section-title">Following</h2>
+        </div>
         <div className="empty-state">
           <span className="emoji">&#128064;</span>
           Not following anyone yet.
@@ -96,9 +113,16 @@ export default async function FollowingPage() {
 
   return (
     <div className="page-container">
-      <h2 className="section-title">Following</h2>
+      <div className="following-header">
+        <div className="following-title-row">
+          <h2 className="section-title">Following</h2>
+          <span className="following-count">{orderedCards.length}</span>
+        </div>
+        <FindFriendsCTA />
+      </div>
+
       <div className="following-grid">
-        {orderedCards.map((profile) => {
+        {orderedCards.map((profile, index) => {
           const reviews = reviewsByUser.get(profile.id) ?? [];
           const stats = deriveProfileStats(reviews);
           const hero = formatHeroStatement(stats);
@@ -107,7 +131,16 @@ export default async function FollowingPage() {
               key={profile.id}
               href={`/u/${profile.id}`}
               className="following-card"
+              style={{ animationDelay: `${index * 60}ms` }}
             >
+              {stats.seenCount > 0 && (
+                <span className="following-card-badge">
+                  <span className="following-card-badge-count">{stats.seenCount}</span>
+                  <span className="following-card-badge-label">
+                    {stats.seenCount === 1 ? "playbill" : "playbills"}
+                  </span>
+                </span>
+              )}
               <p className="following-card-name">@{profile.handle}</p>
               {hero && <p className="following-card-hero">{hero}</p>}
             </Link>
