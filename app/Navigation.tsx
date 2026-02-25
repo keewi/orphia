@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { label: "Explore", href: "/" },
   { label: "My Playbills", href: "/my-theatre-life" },
+  { label: "Activity", href: "/activity" },
   { label: "Following", href: "/following" },
 ];
 
@@ -118,9 +119,6 @@ export default function Navigation() {
             )}
             {userHandle && (
               <>
-                <Link href={`/u/${userHandle}`} className="account-dropdown-link">
-                  My Profile
-                </Link>
                 <Link href="/find-friends" className="account-dropdown-link">
                   Find Friends
                 </Link>

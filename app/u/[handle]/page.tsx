@@ -1,6 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deriveProfileStats } from "@/lib/profileStats";
 import { Stars } from "@/app/ReviewCards";
@@ -65,6 +64,7 @@ export default async function PublicProfilePage({
 
   const currentUserId = user?.id ?? null;
   const isOwnProfile = currentUserId === profile.id;
+  if (isOwnProfile) redirect("/my-theatre-life");
 
   const { seenCount, sinceYear, uniqueShows } = deriveProfileStats(
     reviews ?? [],
@@ -110,12 +110,10 @@ export default async function PublicProfilePage({
             <h2 className="profile-display-name">{displayName}</h2>
             <p className="profile-handle">@{profile.handle}</p>
           </div>
-          {!isOwnProfile && (
-            <FollowButton
-              profileUserId={profile.id}
-              currentUserId={currentUserId}
-            />
-          )}
+          <FollowButton
+            profileUserId={profile.id}
+            currentUserId={currentUserId}
+          />
         </div>
 
         {seenCount > 0 && sinceYear && (
@@ -137,30 +135,13 @@ export default async function PublicProfilePage({
         </div>
       </div>
 
-      {/* ── Find Friends CTA (own profile only) ── */}
-      {isOwnProfile && (
-        <Link href="/find-friends" className="find-friends-cta">
-          <span className="find-friends-cta-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          Find friends on Orphia
-        </Link>
-      )}
-
       {/* ── Playbills Gallery ── */}
-      <h3 className="subsection-title">
-        {isOwnProfile ? "Your Playbills" : "Playbills"}
-      </h3>
+      <h3 className="subsection-title">Playbills</h3>
 
       {sortedYears.length === 0 ? (
         <div className="empty-state">
           <span className="emoji">🎭</span>
-          {isOwnProfile
-            ? "No Playbills yet — log your first show to start your collection."
-            : `@${profile.handle} hasn't collected any playbills yet.`}
+          {`@${profile.handle} hasn't collected any playbills yet.`}
         </div>
       ) : (
         sortedYears.map((year) => (

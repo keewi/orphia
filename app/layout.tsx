@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import Link from "next/link";
 import Navigation from "./Navigation";
 import "./globals.css";
@@ -36,6 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`} style={{ backgroundColor: "#0F0E12" }}>
       <body style={{ backgroundColor: "#0F0E12" }}>
+        <NextTopLoader
+          color="#F4C542"
+          height={2}
+          showSpinner={false}
+          shadow="0 0 8px rgba(244, 197, 66, 0.4)"
+        />
         <header className="site-header">
           <div className="header-content">
             <h1>
@@ -47,7 +54,9 @@ export default function RootLayout({
           </div>
           <Navigation />
         </header>
-        {children}
+        <main className="main-content">
+          {children}
+        </main>
       </body>
     </html>
   );

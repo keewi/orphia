@@ -44,6 +44,7 @@ alter table saved_musicals enable row level security;
 create policy "Users can read own saved" on saved_musicals for select using (auth.uid() = user_id);
 create policy "Users can insert own saved" on saved_musicals for insert with check (auth.uid() = user_id);
 create policy "Users can delete own saved" on saved_musicals for delete using (auth.uid() = user_id);
+create policy "Saved musicals are publicly readable" on saved_musicals for select using (true);
 
 -- User profiles with unique handles
 create table profiles (

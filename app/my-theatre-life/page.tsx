@@ -21,12 +21,33 @@ export default async function MyTheatreLife() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Get current user's reviews only
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("id, musical_id, musical_title, rating, review_text, date_seen, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [
+    { data: reviews },
+    { data: profile },
+    { count: followerCount },
+    { count: followingCount },
+  ] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id, musical_id, musical_title, rating, review_text, date_seen, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("profiles")
+      .select("id, handle, display_name")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("following_user_id", user.id),
+    supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("follower_user_id", user.id),
+  ]);
+
+  if (!profile) redirect("/choose-handle");
 
   const { seenCount, sinceYear, uniqueShows } = deriveProfileStats(reviews ?? []);
   const mostRecent = reviews?.[0] ?? null;
@@ -58,13 +79,41 @@ export default async function MyTheatreLife() {
 
   return (
     <div className="page-container">
-      <h2 className="section-title">My Playbills</h2>
+      {/* ── Profile Header ── */}
+      <div className="profile-header">
+        <div className="profile-header-top">
+          <div>
+            <h2 className="profile-display-name">@{profile.handle}</h2>
+          </div>
+        </div>
 
-      {seenCount > 0 && sinceYear && (
-        <p className="profile-opener">
-          {seenCount} {seenCount === 1 ? "playbill" : "playbills"} collected since {sinceYear} · {uniqueShows} unique {uniqueShows === 1 ? "show" : "shows"}
-        </p>
-      )}
+        {seenCount > 0 && sinceYear && (
+          <p className="profile-opener">
+            {seenCount} {seenCount === 1 ? "playbill" : "playbills"} collected since {sinceYear} · {uniqueShows} unique {uniqueShows === 1 ? "show" : "shows"}
+          </p>
+        )}
+
+        <div className="profile-follow-counts">
+          <span>
+            <strong>{followerCount ?? 0}</strong>{" "}
+            {followerCount === 1 ? "follower" : "followers"}
+          </span>
+          <span>
+            <strong>{followingCount ?? 0}</strong> following
+          </span>
+        </div>
+      </div>
+
+      {/* ── Find Friends CTA ── */}
+      <Link href="/find-friends" className="find-friends-cta">
+        <span className="find-friends-cta-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        Find friends on Orphia
+      </Link>
 
       {/* ── Most Recently Added ── */}
       {mostRecent && (
