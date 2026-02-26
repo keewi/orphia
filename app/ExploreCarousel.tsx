@@ -117,6 +117,7 @@ function useSwipeGesture({
 
       card!.classList.remove("explore-card--bounce-back");
       // Clear any leftover inline styles from a previous exit animation
+      card!.style.removeProperty("animation");
       card!.style.removeProperty("transform");
       card!.style.removeProperty("opacity");
       card!.style.removeProperty("transition");
@@ -253,15 +254,22 @@ function useSwipeGesture({
         const curY = parseFloat(card!.style.getPropertyValue("--swipe-y")) || 0;
         const curRot = parseFloat(card!.style.getPropertyValue("--swipe-rotate")) || 0;
 
-        // 2. Remove swiping class and CSS vars
+        // 2. Kill the fadeInUp animation. Its fill-mode:both keeps
+        //    transform:translateY(0) at animation-level priority, which
+        //    overrides inline styles and snaps the card to center.
+        //    This MUST be set before removing the swiping class (which
+        //    had animation:none !important keeping it suppressed).
+        card!.style.animation = "none";
+
+        // 3. Remove swiping class and CSS vars
         clearCssVars();
 
-        // 3. Pin card at current drag position via inline styles (prevents snap-back)
+        // 4. Pin card at current drag position via inline styles (prevents snap-back)
         card!.style.transform = `translate(${curX}px, ${curY}px) rotate(${curRot}deg)`;
         card!.style.opacity = "1";
         card!.style.pointerEvents = "none";
 
-        // 4. Force browser to commit the pinned position before applying the transition.
+        // 5. Force browser to commit the pinned position before applying the transition.
         //    Without this reflow, the browser can batch pin + transition into one frame
         //    and the card flies from its natural position instead of the drag position.
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
