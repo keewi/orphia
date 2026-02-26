@@ -2130,34 +2130,7 @@ body {
   opacity: var(--swipe-up-opacity, 0);
 }
 
-/* Swipe-out exit animations */
-
-@keyframes swipeOutRight {
-  to { transform: translateX(120%) rotate(18deg); opacity: 0; }
-}
-
-@keyframes swipeOutLeft {
-  to { transform: translateX(-120%) rotate(-18deg); opacity: 0; }
-}
-
-@keyframes swipeOutUp {
-  to { transform: translateY(-120%); opacity: 0; }
-}
-
-.explore-card--swipe-right {
-  animation: swipeOutRight 0.3s ease-in forwards;
-  pointer-events: none;
-}
-
-.explore-card--swipe-left {
-  animation: swipeOutLeft 0.3s ease-in forwards;
-  pointer-events: none;
-}
-
-.explore-card--swipe-up {
-  animation: swipeOutUp 0.3s ease-in forwards;
-  pointer-events: none;
-}
+/* Swipe exit animations are handled via inline styles in useSwipeGesture */
 
 /* Star row hint pulse (rate-first nudge) */
 

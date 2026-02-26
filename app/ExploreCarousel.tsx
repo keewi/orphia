@@ -28,10 +28,41 @@ const CHECKPOINT_AT = 5;
 
 type SwipeDirection = "right" | "left" | "up" | null;
 
+/* ── Tinder-style swipe constants ── */
+const MAX_ROTATION_DEG = 20;
+const DIRECTION_LOCK_PX = 10;
+const VELOCITY_SAMPLES = 5;
+const VELOCITY_COMMIT_PX_S = 800;
+const EXIT_DURATION_MIN_MS = 200;
+const EXIT_DURATION_MAX_MS = 400;
+
+interface TouchSample {
+  x: number;
+  y: number;
+  t: number; // performance.now()
+}
+
+function computeVelocity(samples: TouchSample[]): { vx: number; vy: number } {
+  if (samples.length < 2) return { vx: 0, vy: 0 };
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  const dt = Math.max(1, last.t - first.t);
+  return {
+    vx: ((last.x - first.x) / dt) * 1000,
+    vy: ((last.y - first.y) / dt) * 1000,
+  };
+}
+
 /**
- * Swipe gesture hook — attaches raw touch events to a card element.
- * Physically drags the card during a swipe, shows directional overlays,
- * and calls the appropriate handler when the swipe exceeds the threshold.
+ * Tinder-style swipe gesture hook.
+ *
+ * Improvements over the previous implementation:
+ * - Exit animation starts from the current drag position (no snap-back glitch)
+ * - 40%-of-screen-width commit threshold (was ~100 px)
+ * - Velocity-aware flick detection (800 px/s bypasses distance threshold)
+ * - Velocity-dependent exit duration (faster flick = quicker exit)
+ * - 20° max rotation proportional to screen width (Tinder-style)
+ * - Instantaneous velocity via sliding window of last 5 touch samples
  */
 function useSwipeGesture({
   cardRef,
@@ -58,10 +89,8 @@ function useSwipeGesture({
 
     let startX = 0;
     let startY = 0;
-    let startTime = 0;
     let gestureState: "pending" | "swiping" | "scrolling" = "pending";
-    let cardWidth = 0;
-    let cardHeight = 0;
+    let touchSamples: TouchSample[] = [];
 
     function clearCssVars() {
       if (!card) return;
@@ -82,14 +111,15 @@ function useSwipeGesture({
       const touch = e.touches[0];
       startX = touch.clientX;
       startY = touch.clientY;
-      startTime = Date.now();
       gestureState = "pending";
-
-      const rect = card!.getBoundingClientRect();
-      cardWidth = rect.width;
-      cardHeight = rect.height;
+      touchSamples = [{ x: touch.clientX, y: touch.clientY, t: performance.now() }];
 
       card!.classList.remove("explore-card--bounce-back");
+      // Clear any leftover inline styles from a previous exit animation
+      card!.style.removeProperty("transform");
+      card!.style.removeProperty("opacity");
+      card!.style.removeProperty("transition");
+      card!.style.removeProperty("pointer-events");
     }
 
     function onTouchMove(e: TouchEvent) {
@@ -106,9 +136,14 @@ function useSwipeGesture({
       const absDX = Math.abs(deltaX);
       const absDY = Math.abs(deltaY);
 
+      // Record touch sample for velocity tracking (keep last N)
+      touchSamples.push({ x: touch.clientX, y: touch.clientY, t: performance.now() });
+      if (touchSamples.length > VELOCITY_SAMPLES) touchSamples.shift();
+
+      // Direction lock: decide on first significant movement
       if (gestureState === "pending") {
         const totalMove = Math.sqrt(absDX ** 2 + absDY ** 2);
-        if (totalMove < 10) return;
+        if (totalMove < DIRECTION_LOCK_PX) return;
 
         const isHorizontal = absDX > absDY * 1.2;
         const isUpward = deltaY < 0 && absDY > absDX * 0.8;
@@ -126,26 +161,29 @@ function useSwipeGesture({
       if (gestureState === "swiping") {
         e.preventDefault();
 
+        const screenW = window.innerWidth;
         // Clamp upward-only for Y (don't let card drag down)
         const clampedY = Math.min(0, deltaY);
-        const rotation = Math.max(-15, Math.min(15, deltaX * 0.06));
+        // Rotation proportional to screen width (Tinder-style)
+        const rotation = (deltaX / screenW) * MAX_ROTATION_DEG;
+        const clampedRotation = Math.max(-MAX_ROTATION_DEG, Math.min(MAX_ROTATION_DEG, rotation));
 
         card!.style.setProperty("--swipe-x", `${deltaX}px`);
         card!.style.setProperty("--swipe-y", `${clampedY}px`);
-        card!.style.setProperty("--swipe-rotate", `${rotation}deg`);
+        card!.style.setProperty("--swipe-rotate", `${clampedRotation}deg`);
 
-        // Compute directional indicator opacities
-        const hThreshold = Math.min(100, cardWidth * 0.3);
-        const vThreshold = Math.min(80, cardHeight * 0.25);
+        // Indicator opacities proportional to commit thresholds
+        const hCommit = screenW * 0.4;
+        const vCommit = window.innerHeight * 0.3;
 
         let rightOp = 0, leftOp = 0, upOp = 0;
 
         if (deltaY < 0 && absDY > absDX * 0.8) {
-          upOp = Math.min(1, absDY / vThreshold);
+          upOp = Math.min(1, absDY / vCommit);
         } else if (deltaX > 0) {
-          rightOp = Math.min(1, deltaX / hThreshold);
+          rightOp = Math.min(1, deltaX / hCommit);
         } else if (deltaX < 0) {
-          leftOp = Math.min(1, absDX / hThreshold);
+          leftOp = Math.min(1, absDX / hCommit);
         }
 
         card!.style.setProperty("--swipe-right-opacity", String(rightOp));
@@ -166,44 +204,95 @@ function useSwipeGesture({
       const absDX = Math.abs(deltaX);
       const absDY = Math.abs(deltaY);
 
-      const elapsed = Date.now() - startTime;
-      const velocity = Math.sqrt(deltaX ** 2 + deltaY ** 2) / Math.max(1, elapsed);
+      // Compute instantaneous velocity from touch sample buffer
+      touchSamples.push({ x: touch.clientX, y: touch.clientY, t: performance.now() });
+      const { vx, vy } = computeVelocity(touchSamples);
 
-      const hThreshold = Math.min(100, cardWidth * 0.3);
-      const vThreshold = Math.min(80, cardHeight * 0.25);
-      const boost = velocity > 0.5 ? 0.6 : 1;
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const hCommit = screenW * 0.4;
+      const vCommit = screenH * 0.3;
 
+      // Commit decision: distance OR velocity OR combined
       let direction: SwipeDirection = null;
 
-      if (deltaY < 0 && absDY > absDX * 0.8 && absDY > vThreshold * boost) {
-        direction = "up";
-      } else if (deltaX > hThreshold * boost) {
-        direction = "right";
-      } else if (deltaX < -(hThreshold * boost)) {
-        direction = "left";
+      if (deltaY < 0 && absDY > absDX * 0.8) {
+        const velocityCommit = vy < -VELOCITY_COMMIT_PX_S;
+        const distanceCommit = absDY > vCommit;
+        const combinedCommit = absDY + Math.abs(vy) * 0.15 > vCommit;
+        if (distanceCommit || velocityCommit || combinedCommit) direction = "up";
+      } else if (deltaX > 0) {
+        const velocityCommit = vx > VELOCITY_COMMIT_PX_S;
+        const distanceCommit = absDX > hCommit;
+        const combinedCommit = absDX + Math.abs(vx) * 0.15 > hCommit;
+        if (distanceCommit || velocityCommit || combinedCommit) direction = "right";
+      } else if (deltaX < 0) {
+        const velocityCommit = vx < -VELOCITY_COMMIT_PX_S;
+        const distanceCommit = absDX > hCommit;
+        const combinedCommit = absDX + Math.abs(vx) * 0.15 > hCommit;
+        if (distanceCommit || velocityCommit || combinedCommit) direction = "left";
       }
 
-      clearCssVars();
       gestureState = "pending";
 
       if (direction) {
         // Check if "seen" swipe is blocked (no rating)
         if (direction === "right" && selectedRatingRef.current === null) {
+          clearCssVars();
           onSwipeRightBlocked();
           card!.classList.add("explore-card--bounce-back");
           return;
         }
 
-        setSwipedDirection(direction);
+        // ── Exit animation from current drag position (Tinder-style) ──
 
-        // Fire the action after the swipe-out animation starts
+        // 1. Capture current drag position from CSS vars
+        const curX = parseFloat(card!.style.getPropertyValue("--swipe-x")) || 0;
+        const curY = parseFloat(card!.style.getPropertyValue("--swipe-y")) || 0;
+        const curRot = parseFloat(card!.style.getPropertyValue("--swipe-rotate")) || 0;
+
+        // 2. Remove swiping class and CSS vars
+        clearCssVars();
+
+        // 3. Pin card at current drag position via inline styles (prevents snap-back)
+        card!.style.transform = `translate(${curX}px, ${curY}px) rotate(${curRot}deg)`;
+        card!.style.opacity = "1";
+
+        // 4. Compute velocity-dependent exit duration
+        const speed = Math.sqrt(vx ** 2 + vy ** 2);
+        const exitDuration = Math.max(
+          EXIT_DURATION_MIN_MS,
+          Math.min(EXIT_DURATION_MAX_MS, 400 - speed * 0.15),
+        );
+
+        // 5. Compute exit target (fly off screen from current position)
+        let exitTransform: string;
+        if (direction === "right") {
+          exitTransform = `translate(${screenW * 1.5}px, ${curY}px) rotate(${curRot + 8}deg)`;
+        } else if (direction === "left") {
+          exitTransform = `translate(${-screenW * 1.5}px, ${curY}px) rotate(${curRot - 8}deg)`;
+        } else {
+          exitTransform = `translate(${curX}px, ${-screenH * 1.5}px) rotate(${curRot}deg)`;
+        }
+
+        // 6. In next frame, apply transition and exit target
+        requestAnimationFrame(() => {
+          card!.style.transition = `transform ${exitDuration}ms ease-out, opacity ${exitDuration}ms ease-out`;
+          card!.style.transform = exitTransform;
+          card!.style.opacity = "0";
+          card!.style.pointerEvents = "none";
+        });
+
+        // 7. Set direction state and fire action callback
+        setSwipedDirection(direction);
         requestAnimationFrame(() => {
           if (direction === "right") onSwipeRight();
           else if (direction === "left") onSwipeLeft();
           else if (direction === "up") onSwipeUp();
         });
       } else {
-        // Below threshold — bounce back
+        // Below threshold — snap back with spring bounce
+        clearCssVars();
         card!.classList.add("explore-card--bounce-back");
       }
     }
@@ -589,9 +678,6 @@ export default function ExploreCarousel({
           "explore-card",
           musical.image_url ? "explore-card--has-image" : "",
           phase === "success" && !swipedDirection ? "explore-card--success" : "",
-          swipedDirection === "right" ? "explore-card--swipe-right" : "",
-          swipedDirection === "left" ? "explore-card--swipe-left" : "",
-          swipedDirection === "up" ? "explore-card--swipe-up" : "",
         ]
           .filter(Boolean)
           .join(" ")}
