@@ -55,8 +55,24 @@ RLS pattern: most tables publicly readable; writes restricted to `auth.uid() = u
 - **Server Components** fetch data with `await createClient()` + `export const dynamic = "force-dynamic"`.
 - **Client Components** (`"use client"`) for interactive UI: search typeahead, follow toggle, nav dropdown, handle validation.
 - **Optimistic updates** in FollowButton and MusicalCard — set state first, then fire Supabase mutation.
-- **Year-grouped galleries** on My Playbills and public profiles — shared logic in `lib/profileStats.ts`.
+- **Year-grouped galleries** on My Playbills and public profiles — shared component `YearGroupedGallery`.
 - **Handle validation** uses debounced (300ms) uniqueness checks on the `profiles` table.
+
+## Modularity rules
+
+Follow these rules when adding or modifying features to keep the codebase modular:
+
+1. **New UI pattern?** Check `app/components/` first. Extend an existing component before creating a new one.
+2. **Need data from Supabase?** Add a function to `musicalReadService.ts` or `profileService.ts`. Never write raw Supabase queries in page files.
+3. **Protected page?** Start with `const user = await requireAuth()`. Never inline `getUser()` + `redirect("/login")`.
+4. **Dates?** Use `formatDate()` / `timeAgo()` from `lib/utils/formatDate.ts`. Never define date helpers inline.
+5. **Stars?** `<StarRating>` for display, `<StarRatingInput>` for interaction. Never inline `"★".repeat()`.
+6. **Empty content?** `<EmptyState>` with optional CTA children. Never create ad-hoc empty-state divs.
+7. **Profile display?** `<ProfileHeader>` + `<YearGroupedGallery>`. Never duplicate profile header or year-grouping logic.
+8. **Add/edit review forms?** `<ReviewForm mode="add|edit">`. Never duplicate form markup.
+9. **Poster images?** `<PosterImage>` with `mode="fill"` or `mode="fixed"`. Never duplicate the image+emoji-fallback pattern.
+10. **Legacy schema fallback?** Only exists inside `musicalReadService.ts` and `musicalWriteService.ts`. Pages never import from `lib/supabase/compat.ts` directly.
+11. **Mutations?** Always go through `musicalWriteService.ts` (reviews + statuses) or server actions in `app/actions.ts`. Never mutate directly from page files.
 
 ## Key locations
 
