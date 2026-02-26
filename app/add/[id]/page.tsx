@@ -4,7 +4,7 @@ import { addReview } from "@/app/actions";
 import Link from "next/link";
 import ExperienceForm from "@/app/ExperienceForm";
 
-const ratingOptions = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+const ratingOptions = [1, 2, 3, 4, 5];
 
 export default async function AddReviewPage({
   params,
@@ -25,8 +25,8 @@ export default async function AddReviewPage({
   return (
     <div className="page-container">
       <div className="form-wrapper">
-        <Link href="/" className="back-link">
-          ← Back to Orphia
+        <Link href="/browse" className="back-link">
+          ← Back to Browse
         </Link>
         <div className="form-card">
           <h1>
@@ -43,8 +43,8 @@ export default async function AddReviewPage({
               <select id="rating" name="rating" required>
                 {ratingOptions.map((val) => (
                   <option key={val} value={val}>
-                    {"★".repeat(Math.floor(val))}
-                    {val % 1 >= 0.5 ? "½" : ""}{" "}
+                    {"★".repeat(val)}
+                    {"☆".repeat(5 - val)}{" "}
                     ({val})
                   </option>
                 ))}
@@ -70,7 +70,7 @@ export default async function AddReviewPage({
               <button type="submit" className="btn btn-submit">
                 Save to Playbill
               </button>
-              <Link href="/" className="btn-cancel">
+              <Link href="/browse" className="btn-cancel">
                 Cancel
               </Link>
             </div>

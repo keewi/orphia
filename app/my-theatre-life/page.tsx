@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isTableMissing, normalizeLegacyReview } from "@/lib/supabase/compat";
 import { deriveProfileStats } from "@/lib/profileStats";
 import { Stars } from "@/app/ReviewCards";
 
@@ -22,14 +23,14 @@ export default async function MyTheatreLife() {
   if (!user) redirect("/login");
 
   const [
-    { data: reviews },
+    { data: reviewData, error: reviewError },
     { data: profile },
     { count: followerCount },
     { count: followingCount },
   ] = await Promise.all([
     supabase
-      .from("reviews")
-      .select("id, musical_id, musical_title, rating, review_text, date_seen, created_at")
+      .from("user_reviews")
+      .select("id, musical_id, rating_int, review_text, watch_date, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -47,26 +48,36 @@ export default async function MyTheatreLife() {
       .eq("follower_user_id", user.id),
   ]);
 
+  let reviews = reviewData;
+  if (isTableMissing(reviewError)) {
+    const { data: legacyData } = await supabase
+      .from("reviews")
+      .select("id, musical_id, rating, review_text, date_seen, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    reviews = (legacyData ?? []).map(normalizeLegacyReview);
+  }
+
   if (!profile) redirect("/choose-handle");
 
   const { seenCount, sinceYear, uniqueShows } = deriveProfileStats(reviews ?? []);
   const mostRecent = reviews?.[0] ?? null;
 
-  // Fetch poster images for reviewed musicals
+  // Fetch musicals for reviewed shows (title + poster)
   const musicalIds = Array.from(new Set((reviews ?? []).map((r) => r.musical_id)));
-  const { data: musicalImages } = musicalIds.length > 0
-    ? await supabase.from("musicals").select("id, image_url").in("id", musicalIds)
+  const { data: musicalRows } = musicalIds.length > 0
+    ? await supabase.from("musicals").select("id, title, image_url").in("id", musicalIds)
     : { data: [] };
-  const imageMap = new Map<string, string | null>(
-    (musicalImages ?? []).map((m) => [m.id, m.image_url])
+  const musicalMap = new Map(
+    (musicalRows ?? []).map((m) => [m.id, m]),
   );
 
-  // Group reviews by year (displayDate = date_seen ?? created_at)
+  // Group reviews by year (displayDate = watch_date ?? created_at)
   const yearGroups: Map<number, typeof reviews> = new Map();
   if (reviews) {
     for (const r of reviews) {
-      const displayDate = r.date_seen
-        ? new Date(r.date_seen + "T00:00:00")
+      const displayDate = r.watch_date
+        ? new Date(r.watch_date + "T00:00:00")
         : new Date(r.created_at);
       const year = displayDate.getFullYear();
       if (!yearGroups.has(year)) yearGroups.set(year, []);
@@ -116,10 +127,10 @@ export default async function MyTheatreLife() {
           {/* ── Body: poster + content ── */}
           <div className="highlight-body">
             <div className="highlight-poster">
-              {imageMap.get(mostRecent.musical_id) ? (
+              {musicalMap.get(mostRecent.musical_id)?.image_url ? (
                 <Image
-                  src={imageMap.get(mostRecent.musical_id)!}
-                  alt={`${mostRecent.musical_title} poster`}
+                  src={musicalMap.get(mostRecent.musical_id)!.image_url!}
+                  alt={`${musicalMap.get(mostRecent.musical_id)?.title ?? "Musical"} poster`}
                   width={88}
                   height={88}
                   style={{ objectFit: "cover", borderRadius: "12px" }}
@@ -130,8 +141,10 @@ export default async function MyTheatreLife() {
             </div>
             <div className="highlight-content">
               <div className="highlight-title-row">
-                <p className="highlight-title">{mostRecent.musical_title}</p>
-                <Stars rating={mostRecent.rating} />
+                <p className="highlight-title">
+                  {musicalMap.get(mostRecent.musical_id)?.title ?? "Unknown Musical"}
+                </p>
+                <Stars rating={mostRecent.rating_int} />
               </div>
               {mostRecent.review_text ? (
                 <p className="highlight-note">{mostRecent.review_text}</p>
@@ -142,9 +155,9 @@ export default async function MyTheatreLife() {
           </div>
 
           {/* ── Footer: date ── */}
-          {mostRecent.date_seen && (
+          {mostRecent.watch_date && (
             <div className="highlight-footer">
-              <p className="highlight-date">Attended {formatDate(mostRecent.date_seen)}</p>
+              <p className="highlight-date">Attended {formatDate(mostRecent.watch_date)}</p>
             </div>
           )}
         </div>
@@ -159,7 +172,7 @@ export default async function MyTheatreLife() {
           No Playbills yet — log your first show to start your collection.
           <br />
           <Link
-            href="/"
+            href="/browse"
             className="btn btn-accent"
             style={{ marginTop: "1rem", display: "inline-block" }}
           >
@@ -171,31 +184,34 @@ export default async function MyTheatreLife() {
           <section key={year} className="gallery-year-group">
             <h4 className="gallery-year-header">{year}</h4>
             <div className="gallery-grid">
-              {yearGroups.get(year)!.map((r) => (
-                <Link
-                  key={r.id}
-                  href={`/edit/${r.id}`}
-                  className="gallery-tile"
-                >
-                  <div className="gallery-poster">
-                    {imageMap.get(r.musical_id) ? (
-                      <Image
-                        src={imageMap.get(r.musical_id)!}
-                        alt={`${r.musical_title} poster`}
-                        fill
-                        sizes="140px"
-                        style={{ objectFit: "cover" }}
-                      />
-                    ) : (
-                      "🎭"
-                    )}
-                  </div>
-                  <div className="gallery-tile-info">
-                    <p className="gallery-tile-title">{r.musical_title}</p>
-                    <Stars rating={r.rating} />
-                  </div>
-                </Link>
-              ))}
+              {yearGroups.get(year)!.map((r) => {
+                const musical = musicalMap.get(r.musical_id);
+                return (
+                  <Link
+                    key={r.id}
+                    href={`/edit/${r.id}`}
+                    className="gallery-tile"
+                  >
+                    <div className="gallery-poster">
+                      {musical?.image_url ? (
+                        <Image
+                          src={musical.image_url}
+                          alt={`${musical?.title ?? "Musical"} poster`}
+                          fill
+                          sizes="140px"
+                          style={{ objectFit: "cover" }}
+                        />
+                      ) : (
+                        "🎭"
+                      )}
+                    </div>
+                    <div className="gallery-tile-info">
+                      <p className="gallery-tile-title">{musical?.title ?? "Unknown Musical"}</p>
+                      <Stars rating={r.rating_int} />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))

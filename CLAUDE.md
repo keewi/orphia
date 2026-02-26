@@ -37,15 +37,18 @@ npm run test     # Vitest unit tests
 
 ## Database
 
-Five tables with Row Level Security. Full DDL in `supabase/schema.sql`.
+Five tables + one view with Row Level Security. Full DDL in `supabase/schema.sql`.
 
-- **musicals** — show catalog (read-only for users)
-- **reviews** — user playbills (rating 1–5 in 0.5 steps, optional date_seen). Publicly readable.
+- **musicals** — show catalog (read-only for users, includes optional `popularity_rank`)
+- **user_reviews** — user playbills (integer `rating_int` 1–5, optional `watch_date`). Multiple reviews per musical allowed. Publicly readable.
+- **user_musical_status** — per-user status per musical (`want_to_see` / `seen` / `skipped`). Composite PK `(user_id, musical_id)`. Publicly readable.
 - **profiles** — user handles (unique, 3–20 chars, `[a-z0-9_]`). Publicly readable.
 - **follows** — social graph (composite PK, self-follow prevented). Publicly readable.
-- **saved_musicals** — save-for-later (private to owner)
+- **user_latest_reviews** (view) — latest review per `(user_id, musical_id)`, built with `DISTINCT ON`.
 
 RLS pattern: most tables publicly readable; writes restricted to `auth.uid() = user_id`.
+
+**Ratings are full-star integers only (1–5).** Historical half-star floats were migrated via `FLOOR(rating + 0.5)` (rounds .5 up). All validation, UI, and DB constraints enforce integer stars. The domain write service (`lib/services/musicalWriteService.ts`) is the single mutation path for reviews and statuses.
 
 ## Key patterns
 

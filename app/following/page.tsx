@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isTableMissing } from "@/lib/supabase/compat";
 import { deriveProfileStats, formatHeroStatement } from "@/lib/profileStats";
 
 export const dynamic = "force-dynamic";
@@ -80,21 +81,33 @@ export default async function FollowingPage() {
   }
 
   // Batch-fetch profiles and reviews in parallel
-  const [{ data: profiles }, { data: allReviews }] = await Promise.all([
+  const [{ data: profiles }, { data: reviewData, error: reviewError }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, handle, display_name")
       .in("id", followedUserIds),
     supabase
-      .from("reviews")
-      .select("user_id, musical_id, date_seen, created_at")
+      .from("user_reviews")
+      .select("user_id, musical_id, watch_date, created_at")
       .in("user_id", followedUserIds),
   ]);
+
+  let allReviews = reviewData;
+  if (isTableMissing(reviewError)) {
+    const { data: legacyData } = await supabase
+      .from("reviews")
+      .select("user_id, musical_id, date_seen, created_at")
+      .in("user_id", followedUserIds);
+    allReviews = (legacyData ?? []).map((r) => ({
+      ...r,
+      watch_date: (r as Record<string, unknown>).date_seen as string | null ?? null,
+    }));
+  }
 
   // Group reviews by user_id
   const reviewsByUser = new Map<
     string,
-    { musical_id: string; date_seen: string | null; created_at: string }[]
+    { musical_id: string; watch_date: string | null; created_at: string }[]
   >();
   for (const r of allReviews ?? []) {
     if (!reviewsByUser.has(r.user_id)) reviewsByUser.set(r.user_id, []);

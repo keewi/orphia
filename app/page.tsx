@@ -1,51 +1,77 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Musical } from "@/lib/types";
-import SearchableMusicalGrid from "./SearchableMusicalGrid";
+import ExploreCarousel from "./ExploreCarousel";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function ExplorePage() {
   const supabase = createClient();
 
-  // Get user first (fast JWT check), then batch-fetch with proper scoping
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const [{ data }, { data: reviewRows }, { data: savedRows }] =
-    await Promise.all([
-      supabase
+  // Fetch all musicals — try popularity_rank ordering first, fall back to title-only
+  let allMusicals: Musical[] | null = null;
+  {
+    const { data, error } = await supabase
+      .from("musicals")
+      .select("id, title, year, description, image_url, popularity_rank")
+      .order("popularity_rank", { ascending: true, nullsFirst: false })
+      .order("title", { ascending: true });
+
+    if (error) {
+      // popularity_rank column may not exist yet — fall back to title ordering
+      const fallback = await supabase
         .from("musicals")
         .select("id, title, year, description, image_url")
-        .order("title"),
-      user
-        ? supabase.from("reviews").select("musical_id").eq("user_id", user.id)
-        : Promise.resolve({ data: [] as { musical_id: string }[] }),
-      supabase.from("saved_musicals").select("musical_id"),
-    ]);
-
-  const musicals: Musical[] = data ?? [];
-
-  // Build status map: musicalId → { seenCount, savedForLater }
-  const seenCounts = new Map<string, number>();
-  for (const r of reviewRows ?? []) {
-    seenCounts.set(r.musical_id, (seenCounts.get(r.musical_id) ?? 0) + 1);
+        .order("title", { ascending: true });
+      allMusicals = fallback.data;
+    } else {
+      allMusicals = data;
+    }
   }
-  const savedSet = new Set((savedRows ?? []).map((s) => s.musical_id));
 
-  const statusMap: Record<
-    string,
-    { seenCount: number; savedForLater: boolean }
-  > = {};
-  for (const m of musicals) {
-    statusMap[m.id] = {
-      seenCount: seenCounts.get(m.id) ?? 0,
-      savedForLater: savedSet.has(m.id),
-    };
+  // Fetch musical IDs where the user already has a status row
+  let statusRows: { musical_id: string }[] = [];
+  if (user) {
+    const { data, error } = await supabase
+      .from("user_musical_status")
+      .select("musical_id")
+      .eq("user_id", user.id);
+
+    if (!error && data) {
+      statusRows = data;
+    } else if (error?.code === "PGRST205") {
+      // Table doesn't exist — fall back to legacy tables
+      const [{ data: savedRows }, { data: reviewRows }] = await Promise.all([
+        supabase
+          .from("saved_musicals")
+          .select("musical_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("reviews")
+          .select("musical_id")
+          .eq("user_id", user.id),
+      ]);
+      const ids = new Set<string>();
+      for (const r of savedRows ?? []) ids.add(r.musical_id);
+      for (const r of reviewRows ?? []) ids.add(r.musical_id);
+      statusRows = Array.from(ids).map((musical_id) => ({ musical_id }));
+    }
   }
+
+  const actedSet = new Set(statusRows.map((s) => s.musical_id));
+
+  // Filter to only unseen/un-acted musicals
+  const musicals: Musical[] = (allMusicals ?? []).filter(
+    (m) => !actedSet.has(m.id),
+  );
 
   return (
     <div className="page-container">
-      <h2 className="section-title">Explore Shows</h2>
-      <SearchableMusicalGrid musicals={musicals} statusMap={statusMap} />
+      <h2 className="section-title">Explore</h2>
+      <ExploreCarousel musicals={musicals} userId={user?.id ?? null} />
     </div>
   );
 }

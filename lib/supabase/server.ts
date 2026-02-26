@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export function createClient() {
@@ -25,5 +26,23 @@ export function createClient() {
         },
       },
     }
+  );
+}
+
+/**
+ * Admin client using the service role key — bypasses Row Level Security.
+ * Use ONLY server-side and ONLY when RLS prevents a legitimate operation
+ * (e.g., the legacy `reviews` table lacks a DELETE policy).
+ *
+ * Returns null if the service role key is not configured.
+ */
+export function createAdminClient() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) return null;
+
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }

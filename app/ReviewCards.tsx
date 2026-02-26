@@ -4,19 +4,17 @@ export interface Review {
   id: string;
   musical_id: string;
   musical_title: string;
-  rating: number;
-  review_text: string;
-  date_seen: string | null;
+  rating_int: number;
+  review_text: string | null;
+  watch_date: string | null;
 }
 
 export function Stars({ rating }: { rating: number }) {
-  const full = Math.floor(rating);
-  const half = rating % 1 >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
+  const full = Math.min(5, Math.max(1, rating));
+  const empty = 5 - full;
   return (
     <span className="stars">
       {"★".repeat(full)}
-      {half && "½"}
       {"☆".repeat(empty)}
     </span>
   );
@@ -39,15 +37,15 @@ export default function ReviewCards({ reviews }: { reviews: Review[] }) {
           <div className="review-header">
             <p className="review-title">{r.musical_title}</p>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <Stars rating={r.rating} />
+              <Stars rating={r.rating_int} />
               <Link href={`/edit/${r.id}`} className="btn btn-edit">
                 Edit
               </Link>
             </div>
           </div>
-          <p className="review-text">{r.review_text}</p>
-          {r.date_seen && (
-            <p className="review-date">Attended {r.date_seen}</p>
+          {r.review_text && <p className="review-text">{r.review_text}</p>}
+          {r.watch_date && (
+            <p className="review-date">Attended {r.watch_date}</p>
           )}
         </li>
       ))}

@@ -1630,3 +1630,425 @@ body {
   color: var(--text-muted);
   margin: 0.2rem 0 0;
 }
+
+/* ══════════════════════════════════════════════
+   EXPLORE CAROUSEL
+   ══════════════════════════════════════════════ */
+
+.explore-carousel {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.explore-progress {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+/* ── Card ── */
+
+.explore-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.explore-card-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: linear-gradient(135deg, var(--velvet), var(--burgundy));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.explore-card-poster-emoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.explore-card-info {
+  padding: 1.25rem 1.5rem 0;
+}
+
+.explore-card-title {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.explore-card-year {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+}
+
+.explore-card-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.6rem 0 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Star selector ── */
+
+.explore-star-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem 0;
+}
+
+.explore-star-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.explore-stars {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.explore-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0.1rem;
+  color: rgba(255, 255, 255, 0.2);
+  transition: color 0.15s, transform 0.15s;
+}
+
+.explore-star:hover {
+  transform: scale(1.15);
+}
+
+.explore-star--filled {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--gold-glow);
+}
+
+.explore-star:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ── Action buttons ── */
+
+.explore-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.explore-btn-seen {
+  flex: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #0F0E12;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.explore-btn-seen:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.explore-btn-want {
+  flex: 1;
+  background: rgba(244, 197, 66, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(244, 197, 66, 0.2);
+  font-weight: 600;
+}
+
+.explore-btn-want:hover:not(:disabled) {
+  background: rgba(244, 197, 66, 0.18);
+  border-color: rgba(244, 197, 66, 0.35);
+}
+
+.explore-btn-want:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.explore-btn-skip {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+}
+
+.explore-btn-skip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+}
+
+.explore-btn-skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Done / empty state ── */
+
+.explore-done {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.explore-done .emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.explore-done-text {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+}
+
+.explore-done-browse {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+
+.explore-done-browse:hover {
+  color: var(--accent);
+}
+
+/* ── Success flash ── */
+
+@keyframes exploreSuccessGlow {
+  0%   { border-color: var(--border-subtle); box-shadow: var(--shadow); }
+  50%  { border-color: var(--accent); box-shadow: var(--shadow), 0 0 20px var(--gold-glow); }
+  100% { border-color: var(--accent); box-shadow: var(--shadow), 0 0 12px var(--gold-glow); opacity: 0; }
+}
+
+.explore-card--success {
+  animation: exploreSuccessGlow 0.4s ease both;
+  pointer-events: none;
+}
+
+/* ── Error toast ── */
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.explore-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 10px;
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.2s ease both;
+}
+
+.explore-toast-dismiss {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.explore-toast-dismiss:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ── Undo toast ── */
+
+.explore-undo-toast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.55rem 1rem;
+  background: rgba(244, 197, 66, 0.08);
+  border: 1px solid rgba(244, 197, 66, 0.18);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.2s ease both;
+}
+
+.explore-undo-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.explore-undo-btn:hover:not(:disabled) {
+  background: rgba(244, 197, 66, 0.12);
+}
+
+.explore-undo-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Session progress ── */
+
+.explore-session-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.explore-session-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.explore-session-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.explore-session-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── Checkpoint callout ── */
+
+@keyframes checkpointFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes checkpointSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.explore-checkpoint-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  animation: checkpointFadeIn 0.2s ease both;
+  padding: 1.5rem;
+}
+
+.explore-checkpoint {
+  background: var(--card-bg);
+  border: 1px solid rgba(244, 197, 66, 0.2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 20px var(--gold-glow);
+  padding: 2rem 2rem 1.5rem;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  animation: checkpointSlideUp 0.3s ease both;
+}
+
+.explore-checkpoint-emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.explore-checkpoint-heading {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.explore-checkpoint-sub {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.75rem;
+  line-height: 1.4;
+}
+
+.explore-checkpoint-primary {
+  width: 100%;
+  text-align: center;
+  font-size: 0.95rem;
+  padding: 0.7rem 1.25rem;
+}
+
+.explore-checkpoint-secondary {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  margin-top: 0.15rem;
+  transition: color 0.15s;
+}
+
+.explore-checkpoint-secondary:hover {
+  color: var(--accent);
+}

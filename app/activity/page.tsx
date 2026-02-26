@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isTableMissing, normalizeLegacyReview } from "@/lib/supabase/compat";
 import { Stars } from "@/app/ReviewCards";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +32,13 @@ type ActivityItem =
       id: string;
       user_id: string;
       musical_id: string;
-      musical_title: string;
-      rating: number;
-      review_text: string;
-      date_seen: string | null;
+      rating_int: number;
+      review_text: string | null;
+      watch_date: string | null;
       created_at: string;
     }
   | {
       type: "want_to_see";
-      id: string;
       user_id: string;
       musical_id: string;
       created_at: string;
@@ -62,28 +61,54 @@ export default async function ActivityPage() {
   const followedIds = (followRows ?? []).map((f) => f.following_user_id);
   const userSet = [user.id, ...followedIds];
 
-  // Parallel fetch: reviews + saved_musicals
-  const [{ data: reviews }, { data: savedMusicals }] = await Promise.all([
+  // Parallel fetch: reviews + want_to_see statuses
+  const [
+    { data: reviewData, error: reviewError },
+    { data: statusData, error: statusError },
+  ] = await Promise.all([
     supabase
-      .from("reviews")
+      .from("user_reviews")
       .select(
-        "id, user_id, musical_id, musical_title, rating, review_text, date_seen, created_at",
+        "id, user_id, musical_id, rating_int, review_text, watch_date, created_at",
       )
       .in("user_id", userSet)
       .order("created_at", { ascending: false })
       .limit(20),
     supabase
-      .from("saved_musicals")
-      .select("id, user_id, musical_id, created_at")
+      .from("user_musical_status")
+      .select("user_id, musical_id, created_at")
       .in("user_id", userSet)
+      .eq("status", "want_to_see")
       .order("created_at", { ascending: false })
       .limit(20),
   ]);
 
+  let reviews = reviewData;
+  if (isTableMissing(reviewError)) {
+    const { data: legacyData } = await supabase
+      .from("reviews")
+      .select("id, user_id, musical_id, rating, review_text, date_seen, created_at")
+      .in("user_id", userSet)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    reviews = (legacyData ?? []).map(normalizeLegacyReview);
+  }
+
+  let statusRows = statusData;
+  if (isTableMissing(statusError)) {
+    const { data: legacyStatus } = await supabase
+      .from("saved_musicals")
+      .select("user_id, musical_id, created_at")
+      .in("user_id", userSet)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    statusRows = legacyStatus;
+  }
+
   // Merge and sort
   const activities: ActivityItem[] = [
     ...(reviews ?? []).map((r) => ({ ...r, type: "review" as const })),
-    ...(savedMusicals ?? []).map((s) => ({
+    ...(statusRows ?? []).map((s) => ({
       ...s,
       type: "want_to_see" as const,
     })),
@@ -150,9 +175,9 @@ export default async function ActivityPage() {
             const musical = musicalMap.get(activity.musical_id);
             const handle = profile?.handle ?? "unknown";
             const imageUrl = musical?.image_url ?? null;
+            const title = musical?.title ?? "Unknown Musical";
 
             if (activity.type === "review") {
-              const title = activity.musical_title;
               return (
                 <article
                   key={`review-${activity.id}`}
@@ -189,17 +214,17 @@ export default async function ActivityPage() {
                     </div>
                     <div className="activity-details">
                       <p className="activity-title">{title}</p>
-                      <Stars rating={activity.rating} />
+                      <Stars rating={activity.rating_int} />
                       {activity.review_text && (
                         <p className="activity-review-text">
                           {activity.review_text}
                         </p>
                       )}
-                      {activity.date_seen && (
+                      {activity.watch_date && (
                         <p className="activity-date-seen">
                           Attended{" "}
                           {new Date(
-                            activity.date_seen + "T00:00:00",
+                            activity.watch_date + "T00:00:00",
                           ).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
@@ -213,11 +238,10 @@ export default async function ActivityPage() {
               );
             }
 
-            // want_to_see — title comes from the musicals join
-            const title = musical?.title ?? "Unknown Musical";
+            // want_to_see
             return (
               <article
-                key={`save-${activity.id}`}
+                key={`save-${activity.user_id}-${activity.musical_id}`}
                 className="activity-card activity-card--save"
               >
                 <div className="activity-card-header">

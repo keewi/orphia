@@ -28,15 +28,35 @@ export default function MusicalCard({
     if (!user) return;
 
     if (next) {
-      await supabase
-        .from("saved_musicals")
-        .insert({ musical_id: musical.id, user_id: user.id });
+      const { error } = await supabase.from("user_musical_status").upsert(
+        {
+          user_id: user.id,
+          musical_id: musical.id,
+          status: "want_to_see" as const,
+        },
+        { onConflict: "user_id, musical_id" },
+      );
+      // Fall back to legacy saved_musicals table if user_musical_status doesn't exist
+      if (error?.code === "PGRST205") {
+        await supabase.from("saved_musicals").upsert(
+          { user_id: user.id, musical_id: musical.id },
+          { onConflict: "user_id, musical_id" },
+        );
+      }
     } else {
-      await supabase
-        .from("saved_musicals")
+      const { error } = await supabase
+        .from("user_musical_status")
         .delete()
         .eq("musical_id", musical.id)
         .eq("user_id", user.id);
+      // Fall back to legacy saved_musicals table
+      if (error?.code === "PGRST205") {
+        await supabase
+          .from("saved_musicals")
+          .delete()
+          .eq("musical_id", musical.id)
+          .eq("user_id", user.id);
+      }
     }
   }, [savedForLater, musical.id]);
 

@@ -1,6 +1,6 @@
 interface ReviewRow {
   musical_id: string;
-  date_seen: string | null;
+  watch_date: string | null;
   created_at: string;
 }
 
@@ -13,13 +13,13 @@ export interface ProfileStats {
 export function deriveProfileStats(reviews: ReviewRow[]): ProfileStats {
   const seenCount = reviews.length;
 
-  // Earliest date_seen, falling back to oldest created_at
+  // Earliest watch_date, falling back to oldest created_at
   const earliestDateSeen = reviews
-    .filter((r) => r.date_seen)
+    .filter((r) => r.watch_date)
     .sort(
       (a, b) =>
-        new Date(a.date_seen!).getTime() - new Date(b.date_seen!).getTime(),
-    )[0]?.date_seen;
+        new Date(a.watch_date!).getTime() - new Date(b.watch_date!).getTime(),
+    )[0]?.watch_date;
 
   const fallbackDate =
     reviews.length > 0

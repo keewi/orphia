@@ -2,24 +2,24 @@ import { describe, it, expect } from "vitest";
 import { deriveProfileStats, formatHeroStatement } from "./profileStats";
 
 describe("deriveProfileStats", () => {
-  it("returns correct stats with mixed date_seen values", () => {
+  it("returns correct stats with mixed watch_date values", () => {
     const reviews = [
-      { musical_id: "hamilton", date_seen: "2024-03-15", created_at: "2024-03-20T00:00:00Z" },
-      { musical_id: "hamilton", date_seen: null, created_at: "2025-01-10T00:00:00Z" },
-      { musical_id: "wicked", date_seen: "2023-06-01", created_at: "2023-06-05T00:00:00Z" },
+      { musical_id: "hamilton", watch_date: "2024-03-15", created_at: "2024-03-20T00:00:00Z" },
+      { musical_id: "hamilton", watch_date: null, created_at: "2025-01-10T00:00:00Z" },
+      { musical_id: "wicked", watch_date: "2023-06-01", created_at: "2023-06-05T00:00:00Z" },
     ];
 
     const stats = deriveProfileStats(reviews);
 
     expect(stats.seenCount).toBe(3);
     expect(stats.uniqueShows).toBe(2);
-    expect(stats.sinceYear).toBe(2023); // earliest date_seen is 2023-06-01
+    expect(stats.sinceYear).toBe(2023); // earliest watch_date is 2023-06-01
   });
 
-  it("falls back to created_at when no date_seen exists", () => {
+  it("falls back to created_at when no watch_date exists", () => {
     const reviews = [
-      { musical_id: "rent", date_seen: null, created_at: "2025-12-01T00:00:00Z" },
-      { musical_id: "cats", date_seen: null, created_at: "2022-08-15T00:00:00Z" },
+      { musical_id: "rent", watch_date: null, created_at: "2025-12-01T00:00:00Z" },
+      { musical_id: "cats", watch_date: null, created_at: "2022-08-15T00:00:00Z" },
     ];
 
     const stats = deriveProfileStats(reviews);
