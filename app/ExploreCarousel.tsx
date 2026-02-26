@@ -33,8 +33,9 @@ const MAX_ROTATION_DEG = 20;
 const DIRECTION_LOCK_PX = 10;
 const VELOCITY_SAMPLES = 5;
 const VELOCITY_COMMIT_PX_S = 800;
-const EXIT_DURATION_MIN_MS = 200;
-const EXIT_DURATION_MAX_MS = 400;
+const EXIT_DURATION_MIN_MS = 250;
+const EXIT_DURATION_MAX_MS = 450;
+const DRAG_DAMPING = 0.75; // card moves at 75% of finger speed for a weighted feel
 
 interface TouchSample {
   x: number;
@@ -162,17 +163,18 @@ function useSwipeGesture({
         e.preventDefault();
 
         const screenW = window.innerWidth;
-        // Clamp upward-only for Y (don't let card drag down)
-        const clampedY = Math.min(0, deltaY);
+        // Apply damping — card moves at 75% of finger speed for a heavier feel
+        const dampedX = deltaX * DRAG_DAMPING;
+        const dampedY = Math.min(0, deltaY * DRAG_DAMPING); // clamp downward
         // Rotation proportional to screen width (Tinder-style)
-        const rotation = (deltaX / screenW) * MAX_ROTATION_DEG;
+        const rotation = (dampedX / screenW) * MAX_ROTATION_DEG;
         const clampedRotation = Math.max(-MAX_ROTATION_DEG, Math.min(MAX_ROTATION_DEG, rotation));
 
-        card!.style.setProperty("--swipe-x", `${deltaX}px`);
-        card!.style.setProperty("--swipe-y", `${clampedY}px`);
+        card!.style.setProperty("--swipe-x", `${dampedX}px`);
+        card!.style.setProperty("--swipe-y", `${dampedY}px`);
         card!.style.setProperty("--swipe-rotate", `${clampedRotation}deg`);
 
-        // Indicator opacities proportional to commit thresholds
+        // Indicator opacities proportional to finger progress toward commit threshold
         const hCommit = screenW * 0.4;
         const vCommit = window.innerHeight * 0.3;
 
@@ -257,15 +259,22 @@ function useSwipeGesture({
         // 3. Pin card at current drag position via inline styles (prevents snap-back)
         card!.style.transform = `translate(${curX}px, ${curY}px) rotate(${curRot}deg)`;
         card!.style.opacity = "1";
+        card!.style.pointerEvents = "none";
 
-        // 4. Compute velocity-dependent exit duration
+        // 4. Force browser to commit the pinned position before applying the transition.
+        //    Without this reflow, the browser can batch pin + transition into one frame
+        //    and the card flies from its natural position instead of the drag position.
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        card!.offsetHeight;
+
+        // 5. Compute velocity-dependent exit duration
         const speed = Math.sqrt(vx ** 2 + vy ** 2);
         const exitDuration = Math.max(
           EXIT_DURATION_MIN_MS,
-          Math.min(EXIT_DURATION_MAX_MS, 400 - speed * 0.15),
+          Math.min(EXIT_DURATION_MAX_MS, 450 - speed * 0.15),
         );
 
-        // 5. Compute exit target (fly off screen from current position)
+        // 6. Compute exit target (fly off screen from current position)
         let exitTransform: string;
         if (direction === "right") {
           exitTransform = `translate(${screenW * 1.5}px, ${curY}px) rotate(${curRot + 8}deg)`;
@@ -275,21 +284,22 @@ function useSwipeGesture({
           exitTransform = `translate(${curX}px, ${-screenH * 1.5}px) rotate(${curRot}deg)`;
         }
 
-        // 6. In next frame, apply transition and exit target
-        requestAnimationFrame(() => {
-          card!.style.transition = `transform ${exitDuration}ms ease-out, opacity ${exitDuration}ms ease-out`;
-          card!.style.transform = exitTransform;
-          card!.style.opacity = "0";
-          card!.style.pointerEvents = "none";
-        });
+        // 7. Apply transition and exit target — reflow above ensures this starts from
+        //    the pinned drag position, not the card's natural center position
+        card!.style.transition = `transform ${exitDuration}ms ease-out, opacity ${exitDuration * 0.8}ms ease-out`;
+        card!.style.transform = exitTransform;
+        card!.style.opacity = "0";
 
-        // 7. Set direction state and fire action callback
+        // 8. Set direction state immediately (for parent className guard)
         setSwipedDirection(direction);
-        requestAnimationFrame(() => {
+
+        // 9. Fire action callback AFTER the card has visually exited the screen.
+        //    This prevents React re-renders from interrupting the exit animation.
+        setTimeout(() => {
           if (direction === "right") onSwipeRight();
           else if (direction === "left") onSwipeLeft();
           else if (direction === "up") onSwipeUp();
-        });
+        }, exitDuration);
       } else {
         // Below threshold — snap back with spring bounce
         clearCssVars();
