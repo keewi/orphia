@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { Musical } from "@/lib/types";
 import SearchBar from "./SearchBar";
 import MusicalCard from "./MusicalCard";
+import EmptyState from "@/app/components/EmptyState";
 
 export default function SearchableMusicalGrid({
   musicals,
@@ -24,10 +25,7 @@ export default function SearchableMusicalGrid({
     <>
       <SearchBar musicals={musicals} onSearch={setSearchQuery} />
       {filteredMusicals.length === 0 ? (
-        <div className="empty-state">
-          <span className="emoji">🔍</span>
-          No musicals match your search.
-        </div>
+        <EmptyState emoji="🔍" message="No musicals match your search." />
       ) : (
         <ul className="musical-grid">
           {filteredMusicals.map((m) => (

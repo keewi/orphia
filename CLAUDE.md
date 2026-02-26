@@ -62,14 +62,23 @@ RLS pattern: most tables publicly readable; writes restricted to `auth.uid() = u
 
 | Area | Files |
 |------|-------|
+| **Shared components** | `app/components/` — `StarRating`, `StarRatingInput`, `PosterImage`, `EmptyState`, `ProfileHeader`, `YearGroupedGallery`, `ReviewForm` |
 | My Playbills (gallery) | `app/my-theatre-life/page.tsx` |
-| Add / edit playbill | `app/add/[id]/page.tsx`, `app/edit/[reviewId]/page.tsx` |
+| Add / edit playbill | `app/add/[id]/page.tsx`, `app/edit/[reviewId]/page.tsx` (both use `ReviewForm`) |
 | Public profile | `app/u/[handle]/page.tsx`, `app/u/[handle]/FollowButton.tsx` |
-| Explore (home) | `app/page.tsx`, `app/SearchableMusicalGrid.tsx`, `app/MusicalCard.tsx` |
+| Explore (home) | `app/page.tsx`, `app/ExploreCarousel.tsx`, `app/MusicalCard.tsx` |
+| Browse | `app/browse/page.tsx`, `app/SearchableMusicalGrid.tsx`, `app/SearchBar.tsx` |
 | Auth | `app/login/page.tsx`, `app/choose-handle/page.tsx`, `middleware.ts` |
-| Server actions | `app/actions.ts` |
+| **Server actions** | `app/actions.ts` |
+| **Read service** | `lib/services/musicalReadService.ts` — all review/musical/status reads with legacy fallback |
+| **Write service** | `lib/services/musicalWriteService.ts` — all review/status mutations |
+| **Profile service** | `lib/services/profileService.ts` — profiles + social graph queries |
+| **Auth guard** | `lib/services/authGuard.ts` — `requireAuth()` for protected pages |
+| Date utils | `lib/utils/formatDate.ts` — `formatDate()`, `timeAgo()` |
 | Supabase clients | `lib/supabase/server.ts`, `lib/supabase/client.ts` |
+| Schema compat | `lib/supabase/compat.ts` — legacy table detection + row normalization |
 | Profile stats | `lib/profileStats.ts` (+ `.test.ts`) |
+| Analytics | `lib/analytics.ts` — type-safe event tracking |
 | Design system | `app/globals.css` |
 | DB schema | `supabase/schema.sql` |
 

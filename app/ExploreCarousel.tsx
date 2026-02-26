@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import StarRatingInput from "@/app/components/StarRatingInput";
 import type { Musical } from "@/lib/types";
 import type { MusicalStatusValue } from "@/lib/types";
 import {
@@ -324,22 +325,11 @@ export default function ExploreCarousel({
         {/* Star selector */}
         <div className="explore-star-row">
           <span className="explore-star-label">Your rating</span>
-          <div className="explore-stars" role="radiogroup" aria-label="Rating">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                className={`explore-star${selectedRating !== null && star <= selectedRating ? " explore-star--filled" : ""}`}
-                onClick={() => setSelectedRating(star)}
-                aria-label={`${star} star${star > 1 ? "s" : ""}`}
-                disabled={disabled}
-              >
-                {selectedRating !== null && star <= selectedRating
-                  ? "\u2605"
-                  : "\u2606"}
-              </button>
-            ))}
-          </div>
+          <StarRatingInput
+            value={selectedRating}
+            onChange={setSelectedRating}
+            disabled={disabled}
+          />
         </div>
 
         {/* Actions */}

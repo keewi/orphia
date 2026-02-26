@@ -601,6 +601,14 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.empty-state-actions {
+  margin-top: 1rem;
+}
+
+.poster-emoji {
+  font-size: 2rem;
+}
+
 /* ══════════════════════════════════════════════
    FORM PAGE
    ══════════════════════════════════════════════ */

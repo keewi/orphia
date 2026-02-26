@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StarRating from "@/app/components/StarRating";
 
 export interface Review {
   id: string;
@@ -9,16 +10,8 @@ export interface Review {
   watch_date: string | null;
 }
 
-export function Stars({ rating }: { rating: number }) {
-  const full = Math.min(5, Math.max(1, rating));
-  const empty = 5 - full;
-  return (
-    <span className="stars">
-      {"★".repeat(full)}
-      {"☆".repeat(empty)}
-    </span>
-  );
-}
+/** @deprecated Import StarRating from "@/app/components/StarRating" directly. */
+export { default as Stars } from "@/app/components/StarRating";
 
 export default function ReviewCards({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
@@ -37,7 +30,7 @@ export default function ReviewCards({ reviews }: { reviews: Review[] }) {
           <div className="review-header">
             <p className="review-title">{r.musical_title}</p>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <Stars rating={r.rating_int} />
+              <StarRating rating={r.rating_int} />
               <Link href={`/edit/${r.id}`} className="btn btn-edit">
                 Edit
               </Link>

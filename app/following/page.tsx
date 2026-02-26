@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { isTableMissing } from "@/lib/supabase/compat";
+import { requireAuth } from "@/lib/services/authGuard";
+import { getReviewStatsForUsers } from "@/lib/services/musicalReadService";
+import {
+  getFollowedUsersOrdered,
+  getProfilesByIds,
+} from "@/lib/services/profileService";
 import { deriveProfileStats, formatHeroStatement } from "@/lib/profileStats";
+import EmptyState from "@/app/components/EmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -19,30 +23,19 @@ const FindFriendsCTA = () => (
 );
 
 export default async function FollowingPage() {
-  const supabase = createClient();
+  const user = await requireAuth();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  // Fetch who the current user follows (most recent first, limit 50)
-  const { data: followRows, error: followError } = await supabase
-    .from("follows")
-    .select("following_user_id, created_at")
-    .eq("follower_user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (followError) {
+  let followRows: { following_user_id: string; created_at: string }[];
+  try {
+    followRows = await getFollowedUsersOrdered(user.id);
+  } catch {
     return (
       <div className="page-container">
         <div className="following-header">
           <h2 className="section-title">Following</h2>
           <FindFriendsCTA />
         </div>
-        <div className="empty-state">
-          <span className="emoji">&#9888;&#65039;</span>
-          Something went wrong loading your follows.
-          <br />
+        <EmptyState emoji="&#9888;&#65039;" message="Something went wrong loading your follows.">
           <a
             href="/following"
             className="btn btn-accent"
@@ -50,12 +43,12 @@ export default async function FollowingPage() {
           >
             Try again
           </a>
-        </div>
+        </EmptyState>
       </div>
     );
   }
 
-  const followedUserIds = (followRows ?? []).map((f) => f.following_user_id);
+  const followedUserIds = followRows.map((f) => f.following_user_id);
 
   // Empty state
   if (followedUserIds.length === 0) {
@@ -64,10 +57,7 @@ export default async function FollowingPage() {
         <div className="following-header">
           <h2 className="section-title">Following</h2>
         </div>
-        <div className="empty-state">
-          <span className="emoji">&#128064;</span>
-          Not following anyone yet.
-          <br />
+        <EmptyState emoji="&#128064;" message="Not following anyone yet.">
           <Link
             href="/find-friends"
             className="btn btn-accent"
@@ -75,49 +65,26 @@ export default async function FollowingPage() {
           >
             Find Friends
           </Link>
-        </div>
+        </EmptyState>
       </div>
     );
   }
 
   // Batch-fetch profiles and reviews in parallel
-  const [{ data: profiles }, { data: reviewData, error: reviewError }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, handle, display_name")
-      .in("id", followedUserIds),
-    supabase
-      .from("user_reviews")
-      .select("user_id, musical_id, watch_date, created_at")
-      .in("user_id", followedUserIds),
+  const [profileMap, allReviews] = await Promise.all([
+    getProfilesByIds(followedUserIds),
+    getReviewStatsForUsers(followedUserIds),
   ]);
-
-  let allReviews = reviewData;
-  if (isTableMissing(reviewError)) {
-    const { data: legacyData } = await supabase
-      .from("reviews")
-      .select("user_id, musical_id, date_seen, created_at")
-      .in("user_id", followedUserIds);
-    allReviews = (legacyData ?? []).map((r) => ({
-      ...r,
-      watch_date: (r as Record<string, unknown>).date_seen as string | null ?? null,
-    }));
-  }
 
   // Group reviews by user_id
   const reviewsByUser = new Map<
     string,
     { musical_id: string; watch_date: string | null; created_at: string }[]
   >();
-  for (const r of allReviews ?? []) {
+  for (const r of allReviews) {
     if (!reviewsByUser.has(r.user_id)) reviewsByUser.set(r.user_id, []);
     reviewsByUser.get(r.user_id)!.push(r);
   }
-
-  // Profile map for O(1) lookup
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p]),
-  );
 
   // Maintain original follow order (most recent first)
   const orderedCards = followedUserIds
