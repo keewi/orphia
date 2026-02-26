@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/profileService";
 import { deriveProfileStats, formatHeroStatement } from "@/lib/profileStats";
 import EmptyState from "@/app/components/EmptyState";
+import LinkCard from "@/app/components/LinkCard";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +108,7 @@ export default async function FollowingPage() {
           const stats = deriveProfileStats(reviews);
           const hero = formatHeroStatement(stats);
           return (
-            <Link
+            <LinkCard
               key={profile.id}
               href={`/u/${profile.id}`}
               className="following-card"
@@ -123,7 +124,7 @@ export default async function FollowingPage() {
               )}
               <p className="following-card-name">@{profile.handle}</p>
               {hero && <p className="following-card-hero">{hero}</p>}
-            </Link>
+            </LinkCard>
           );
         })}
       </div>

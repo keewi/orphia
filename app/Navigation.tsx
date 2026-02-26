@@ -17,9 +17,11 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userHandle, setUserHandle] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
 
   // Fetch user email and handle on mount
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function Navigation() {
     });
   }, []);
 
-  // Close menu on click outside
+  // Close account menu on click outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -53,15 +55,31 @@ export default function Navigation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
-  // Close menu on route change
+  // Close mobile menu on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        mobileRef.current &&
+        !mobileRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    }
+    if (mobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  // Close all menus on route change
   useEffect(() => {
     setMenuOpen(false);
+    setMobileMenuOpen(false);
   }, [pathname]);
 
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    // Clear cached handle cookie so next sign-in re-checks
     document.cookie = "x-has-handle=; path=/; max-age=0";
     router.push("/login");
     router.refresh();
@@ -73,7 +91,8 @@ export default function Navigation() {
   }
 
   return (
-    <>
+    <div className="header-nav" ref={mobileRef}>
+      {/* ── Desktop: pill nav + account icon ── */}
       <nav className="site-nav">
         {navItems.map(({ label, href }) => (
           <Link
@@ -86,7 +105,6 @@ export default function Navigation() {
         ))}
       </nav>
 
-      {/* Account icon — top-right corner */}
       <div className="account-menu" ref={menuRef}>
         <button
           type="button"
@@ -132,6 +150,52 @@ export default function Navigation() {
           </div>
         )}
       </div>
-    </>
+
+      {/* ── Mobile: hamburger toggle ── */}
+      <button
+        type="button"
+        className={`mobile-menu-toggle${mobileMenuOpen ? " mobile-menu-toggle-active" : ""}`}
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Menu"
+        aria-expanded={mobileMenuOpen}
+      >
+        <span className="mobile-menu-bar" />
+        <span className="mobile-menu-bar" />
+        <span className="mobile-menu-bar" />
+      </button>
+
+      {/* ── Mobile: dropdown menu ── */}
+      {mobileMenuOpen && (
+        <nav className="mobile-menu">
+          {navItems.map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`mobile-menu-link${pathname === href ? " mobile-menu-link-active" : ""}`}
+            >
+              {label}
+            </Link>
+          ))}
+
+          <hr className="mobile-menu-divider" />
+
+          {userEmail && (
+            <p className="mobile-menu-email">{userEmail}</p>
+          )}
+          {userHandle && (
+            <Link href="/find-friends" className="mobile-menu-link">
+              Find Friends
+            </Link>
+          )}
+          <button
+            type="button"
+            className="mobile-menu-link mobile-menu-signout"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </button>
+        </nav>
+      )}
+    </div>
   );
 }

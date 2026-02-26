@@ -22,7 +22,6 @@ export default async function ExplorePage() {
 
   return (
     <div className="page-container">
-      <h2 className="section-title">Explore</h2>
       <ExploreCarousel musicals={musicals} userId={user?.id ?? null} />
     </div>
   );

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import PosterImage from "./PosterImage";
 import StarRating from "./StarRating";
+import LinkCard from "./LinkCard";
 
 /**
  * Year-grouped gallery of playbill tiles.
@@ -80,9 +80,9 @@ export default function YearGroupedGallery({
 
               if (linkToEdit) {
                 return (
-                  <Link key={r.id} href={`/edit/${r.id}`} className="gallery-tile">
+                  <LinkCard key={r.id} href={`/edit/${r.id}`} className="gallery-tile">
                     {tile}
-                  </Link>
+                  </LinkCard>
                 );
               }
 

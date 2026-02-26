@@ -92,6 +92,12 @@ export default function ExploreCarousel({
     return () => clearTimeout(id);
   }, [phase]);
 
+  // Track the most recent successful action for the persistent status badge
+  const [lastAction, setLastAction] = useState<{
+    actionType: "want_to_see" | "skipped" | "seen";
+    title: string;
+  } | null>(null);
+
   const clearUndo = useCallback(() => {
     if (undoTimer.current) {
       clearTimeout(undoTimer.current);
@@ -110,6 +116,7 @@ export default function ExploreCarousel({
         reviewId?: string;
         ratingInt?: number;
       }>,
+      musicalTitle: string,
     ) => {
       if (inFlight.current) return;
       inFlight.current = true;
@@ -156,7 +163,7 @@ export default function ExploreCarousel({
             });
           }
 
-          // Show undo toast
+          // Show persistent status badge + undo option
           const payload: UndoPayload = {
             actionType: result.actionType,
             musicalId: result.musicalId,
@@ -164,12 +171,10 @@ export default function ExploreCarousel({
             reviewId: result.reviewId,
           };
           setUndoPayload(payload);
-
-          // Auto-dismiss undo after 3 seconds
-          undoTimer.current = setTimeout(() => {
-            setUndoPayload(null);
-            undoTimer.current = null;
-          }, 3000);
+          setLastAction({
+            actionType: result.actionType,
+            title: musicalTitle,
+          });
         }, 400);
       } catch (err) {
         setPhase("error");
@@ -185,20 +190,20 @@ export default function ExploreCarousel({
   const handleWantToSee = useCallback(() => {
     const musical = musicals[currentIndex];
     if (!musical) return;
-    runAction(() => exploreWantToSee(musical.id));
+    runAction(() => exploreWantToSee(musical.id), musical.title);
   }, [musicals, currentIndex, runAction]);
 
   const handleSkip = useCallback(() => {
     const musical = musicals[currentIndex];
     if (!musical) return;
-    runAction(() => exploreSkip(musical.id));
+    runAction(() => exploreSkip(musical.id), musical.title);
   }, [musicals, currentIndex, runAction]);
 
   const handleSeen = useCallback(() => {
     if (selectedRating === null) return;
     const musical = musicals[currentIndex];
     if (!musical) return;
-    runAction(() => exploreSeen(musical.id, selectedRating));
+    runAction(() => exploreSeen(musical.id, selectedRating), musical.title);
   }, [selectedRating, musicals, currentIndex, runAction]);
 
   const handleUndo = useCallback(async () => {
@@ -215,6 +220,7 @@ export default function ExploreCarousel({
       // Go back to the undone card
       setCurrentIndex((i) => Math.max(0, i - 1));
       setSelectedRating(null);
+      setLastAction(null);
       // If we're undoing a "seen" action, decrement the session counter
       if (undoPayload.actionType === "seen") {
         setSeenThisSession((prev) => Math.max(0, prev - 1));
@@ -244,6 +250,7 @@ export default function ExploreCarousel({
   if (isComplete) {
     return (
       <div className="explore-done">
+        <h2 className="section-title" style={{ marginBottom: "1.5rem" }}>Explore</h2>
         <span className="emoji">🎉</span>
         <p className="explore-done-text">
           You&rsquo;ve explored every show in our catalog!
@@ -268,8 +275,38 @@ export default function ExploreCarousel({
 
   const musical = musicals[currentIndex];
 
+  const actionLabel = lastAction
+    ? lastAction.actionType === "seen"
+      ? "Seen"
+      : lastAction.actionType === "want_to_see"
+        ? "Saved"
+        : "Skipped"
+    : null;
+
   return (
     <div className="explore-carousel">
+      {/* Header row: title + persistent status badge */}
+      <div className="explore-header">
+        <h2 className="section-title">Explore</h2>
+        {lastAction && (
+          <div className="explore-status-badge" key={currentIndex} role="status">
+            <span className="explore-status-label">
+              {actionLabel} &middot; {lastAction.title}
+            </span>
+            {undoPayload && (
+              <button
+                type="button"
+                className="explore-status-undo"
+                onClick={handleUndo}
+                disabled={undoing}
+              >
+                {undoing ? "Undoing\u2026" : "Undo"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Progress indicator */}
       <p className="explore-progress">
         {currentIndex + 1} of {musicals.length}
@@ -360,21 +397,6 @@ export default function ExploreCarousel({
           </button>
         </div>
       </div>
-
-      {/* Undo toast */}
-      {undoPayload && (
-        <div className="explore-undo-toast" role="status">
-          <span>Saved.</span>
-          <button
-            type="button"
-            className="explore-undo-btn"
-            onClick={handleUndo}
-            disabled={undoing}
-          >
-            {undoing ? "Undoing\u2026" : "Undo"}
-          </button>
-        </div>
-      )}
 
       {/* Error toast */}
       {phase === "error" && errorMsg && (

@@ -44,14 +44,22 @@ export default function RootLayout({
           shadow="0 0 8px rgba(244, 197, 66, 0.4)"
         />
         <header className="site-header">
-          <div className="header-content">
-            <h1>
-              <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-                <span className="brand-accent">Orphia</span>
-              </Link>
-            </h1>
-            <p className="tagline">Remember every curtain call</p>
-          </div>
+          <Link href="/" className="header-logo">
+            {/* Placeholder icon: "O" merged with a playbill page-fold */}
+            <svg
+              className="header-logo-icon"
+              width="28"
+              height="28"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="4" y="2" width="24" height="28" rx="4" stroke="currentColor" strokeWidth="2.2" />
+              <path d="M22 2 L28 8 L22 8 Z" fill="currentColor" opacity="0.5" />
+              <ellipse cx="16" cy="17" rx="7" ry="8" stroke="currentColor" strokeWidth="2" />
+            </svg>
+            <span className="header-logo-text">Orphia</span>
+          </Link>
           <Navigation />
         </header>
         <main className="main-content">
