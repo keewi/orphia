@@ -1,6 +1,6 @@
 import PosterImage from "./PosterImage";
 import StarRating from "./StarRating";
-import LinkCard from "./LinkCard";
+import InteractiveGalleryTile from "./InteractiveGalleryTile";
 
 /**
  * Year-grouped gallery of playbill tiles.
@@ -80,9 +80,14 @@ export default function YearGroupedGallery({
 
               if (linkToEdit) {
                 return (
-                  <LinkCard key={r.id} href={`/edit/${r.id}`} className="gallery-tile">
-                    {tile}
-                  </LinkCard>
+                  <InteractiveGalleryTile
+                    key={r.id}
+                    reviewId={r.id}
+                    musicalId={r.musical_id}
+                    initialRating={r.rating_int}
+                    imageUrl={musical?.image_url ?? null}
+                    title={musical?.title ?? "Unknown Musical"}
+                  />
                 );
               }
 

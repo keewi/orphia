@@ -7,6 +7,7 @@ import {
   markWantToSee,
   markSkipped,
   editReview as editReviewService,
+  updateRatingOnly,
   removeStatus,
   restoreStatus,
   deleteReview as deleteReviewService,
@@ -63,6 +64,30 @@ export async function editReview(formData: FormData) {
   });
 
   redirect("/my-theatre-life");
+}
+
+// ── Inline gallery actions (no redirect) ──
+
+export async function quickRate(reviewId: string, ratingInt: number) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await updateRatingOnly({ userId: user.id, reviewId, ratingInt });
+  return { ok: true };
+}
+
+export async function removePlaybill(reviewId: string) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await deleteReviewService({ userId: user.id, reviewId });
+  return { ok: true };
 }
 
 // ── Explore carousel actions (no redirect — return undo payload) ──

@@ -22,6 +22,11 @@ export interface AnalyticsEventMap {
   explore_cta_view_playbill_clicked: Record<string, never>;
   explore_cta_browse_clicked: Record<string, never>;
   explore_undo_clicked: { actionType: string; musicalId: string };
+  explore_swipe_triggered: {
+    musicalId: string;
+    direction: "right" | "left" | "up";
+    blocked?: boolean;
+  };
 }
 
 // ── Context attached to every event ──────────────────────

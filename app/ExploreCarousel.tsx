@@ -26,6 +26,202 @@ interface UndoPayload {
 const SEEN_GOAL = 10;
 const CHECKPOINT_AT = 5;
 
+type SwipeDirection = "right" | "left" | "up" | null;
+
+/**
+ * Swipe gesture hook — attaches raw touch events to a card element.
+ * Physically drags the card during a swipe, shows directional overlays,
+ * and calls the appropriate handler when the swipe exceeds the threshold.
+ */
+function useSwipeGesture({
+  cardRef,
+  disabledRef,
+  selectedRatingRef,
+  onSwipeRight,
+  onSwipeLeft,
+  onSwipeUp,
+  onSwipeRightBlocked,
+}: {
+  cardRef: React.RefObject<HTMLDivElement | null>;
+  disabledRef: React.MutableRefObject<boolean>;
+  selectedRatingRef: React.MutableRefObject<number | null>;
+  onSwipeRight: () => void;
+  onSwipeLeft: () => void;
+  onSwipeUp: () => void;
+  onSwipeRightBlocked: () => void;
+}) {
+  const [swipedDirection, setSwipedDirection] = useState<SwipeDirection>(null);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let gestureState: "pending" | "swiping" | "scrolling" = "pending";
+    let cardWidth = 0;
+    let cardHeight = 0;
+
+    function clearCssVars() {
+      if (!card) return;
+      card.style.removeProperty("--swipe-x");
+      card.style.removeProperty("--swipe-y");
+      card.style.removeProperty("--swipe-rotate");
+      card.style.removeProperty("--swipe-right-opacity");
+      card.style.removeProperty("--swipe-left-opacity");
+      card.style.removeProperty("--swipe-up-opacity");
+      card.classList.remove("explore-card--swiping");
+    }
+
+    function onTouchStart(e: TouchEvent) {
+      if (disabledRef.current) return;
+      const target = e.target as HTMLElement;
+      if (target.closest(".explore-stars") || target.closest(".explore-actions")) return;
+
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTime = Date.now();
+      gestureState = "pending";
+
+      const rect = card!.getBoundingClientRect();
+      cardWidth = rect.width;
+      cardHeight = rect.height;
+
+      card!.classList.remove("explore-card--bounce-back");
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      if (gestureState === "scrolling" || disabledRef.current) return;
+      if (e.touches.length > 1) {
+        gestureState = "scrolling";
+        clearCssVars();
+        return;
+      }
+
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+      const absDX = Math.abs(deltaX);
+      const absDY = Math.abs(deltaY);
+
+      if (gestureState === "pending") {
+        const totalMove = Math.sqrt(absDX ** 2 + absDY ** 2);
+        if (totalMove < 10) return;
+
+        const isHorizontal = absDX > absDY * 1.2;
+        const isUpward = deltaY < 0 && absDY > absDX * 0.8;
+
+        if (isHorizontal || isUpward) {
+          gestureState = "swiping";
+          card!.classList.add("explore-card--swiping");
+          e.preventDefault();
+        } else {
+          gestureState = "scrolling";
+          return;
+        }
+      }
+
+      if (gestureState === "swiping") {
+        e.preventDefault();
+
+        // Clamp upward-only for Y (don't let card drag down)
+        const clampedY = Math.min(0, deltaY);
+        const rotation = Math.max(-15, Math.min(15, deltaX * 0.06));
+
+        card!.style.setProperty("--swipe-x", `${deltaX}px`);
+        card!.style.setProperty("--swipe-y", `${clampedY}px`);
+        card!.style.setProperty("--swipe-rotate", `${rotation}deg`);
+
+        // Compute directional indicator opacities
+        const hThreshold = Math.min(100, cardWidth * 0.3);
+        const vThreshold = Math.min(80, cardHeight * 0.25);
+
+        let rightOp = 0, leftOp = 0, upOp = 0;
+
+        if (deltaY < 0 && absDY > absDX * 0.8) {
+          upOp = Math.min(1, absDY / vThreshold);
+        } else if (deltaX > 0) {
+          rightOp = Math.min(1, deltaX / hThreshold);
+        } else if (deltaX < 0) {
+          leftOp = Math.min(1, absDX / hThreshold);
+        }
+
+        card!.style.setProperty("--swipe-right-opacity", String(rightOp));
+        card!.style.setProperty("--swipe-left-opacity", String(leftOp));
+        card!.style.setProperty("--swipe-up-opacity", String(upOp));
+      }
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+      if (gestureState !== "swiping") {
+        gestureState = "pending";
+        return;
+      }
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+      const absDX = Math.abs(deltaX);
+      const absDY = Math.abs(deltaY);
+
+      const elapsed = Date.now() - startTime;
+      const velocity = Math.sqrt(deltaX ** 2 + deltaY ** 2) / Math.max(1, elapsed);
+
+      const hThreshold = Math.min(100, cardWidth * 0.3);
+      const vThreshold = Math.min(80, cardHeight * 0.25);
+      const boost = velocity > 0.5 ? 0.6 : 1;
+
+      let direction: SwipeDirection = null;
+
+      if (deltaY < 0 && absDY > absDX * 0.8 && absDY > vThreshold * boost) {
+        direction = "up";
+      } else if (deltaX > hThreshold * boost) {
+        direction = "right";
+      } else if (deltaX < -(hThreshold * boost)) {
+        direction = "left";
+      }
+
+      clearCssVars();
+      gestureState = "pending";
+
+      if (direction) {
+        // Check if "seen" swipe is blocked (no rating)
+        if (direction === "right" && selectedRatingRef.current === null) {
+          onSwipeRightBlocked();
+          card!.classList.add("explore-card--bounce-back");
+          return;
+        }
+
+        setSwipedDirection(direction);
+
+        // Fire the action after the swipe-out animation starts
+        requestAnimationFrame(() => {
+          if (direction === "right") onSwipeRight();
+          else if (direction === "left") onSwipeLeft();
+          else if (direction === "up") onSwipeUp();
+        });
+      } else {
+        // Below threshold — bounce back
+        card!.classList.add("explore-card--bounce-back");
+      }
+    }
+
+    card.addEventListener("touchstart", onTouchStart, { passive: true });
+    card.addEventListener("touchmove", onTouchMove, { passive: false });
+    card.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      card.removeEventListener("touchstart", onTouchStart);
+      card.removeEventListener("touchmove", onTouchMove);
+      card.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [cardRef, disabledRef, selectedRatingRef, onSwipeRight, onSwipeLeft, onSwipeUp, onSwipeRightBlocked]);
+
+  return { swipedDirection, clearSwipedDirection: () => setSwipedDirection(null) };
+}
+
 export default function ExploreCarousel({
   musicals,
   userId,
@@ -239,6 +435,66 @@ export default function ExploreCarousel({
   const disabled = phase === "busy" || phase === "success";
   const isComplete = currentIndex >= musicals.length;
 
+  // ── Swipe gesture ──
+  const cardRef = useRef<HTMLDivElement>(null);
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
+  const selectedRatingRef = useRef(selectedRating);
+  selectedRatingRef.current = selectedRating;
+
+  const [showRateHint, setShowRateHint] = useState(false);
+  const [starRowHint, setStarRowHint] = useState(false);
+
+  const onSwipeRightBlocked = useCallback(() => {
+    const m = musicals[currentIndex];
+    if (m) {
+      emit("explore_swipe_triggered", {
+        musicalId: m.id,
+        direction: "right",
+        blocked: true,
+      });
+    }
+    setShowRateHint(true);
+    setStarRowHint(true);
+    setTimeout(() => setShowRateHint(false), 2500);
+    setTimeout(() => setStarRowHint(false), 1500);
+  }, [musicals, currentIndex, emit]);
+
+  const swipeRight = useCallback(() => {
+    const m = musicals[currentIndex];
+    if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "right" });
+    handleSeen();
+  }, [musicals, currentIndex, emit, handleSeen]);
+
+  const swipeLeft = useCallback(() => {
+    const m = musicals[currentIndex];
+    if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "left" });
+    handleSkip();
+  }, [musicals, currentIndex, emit, handleSkip]);
+
+  const swipeUp = useCallback(() => {
+    const m = musicals[currentIndex];
+    if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "up" });
+    handleWantToSee();
+  }, [musicals, currentIndex, emit, handleWantToSee]);
+
+  const { swipedDirection, clearSwipedDirection } = useSwipeGesture({
+    cardRef,
+    disabledRef,
+    selectedRatingRef,
+    onSwipeRight: swipeRight,
+    onSwipeLeft: swipeLeft,
+    onSwipeUp: swipeUp,
+    onSwipeRightBlocked,
+  });
+
+  // Reset swipe direction when card changes
+  useEffect(() => {
+    clearSwipedDirection();
+    setShowRateHint(false);
+    setStarRowHint(false);
+  }, [currentIndex, clearSwipedDirection]);
+
   // Analytics: onboarding completed (fires once when all cards exhausted)
   useEffect(() => {
     if (isComplete) {
@@ -327,15 +583,30 @@ export default function ExploreCarousel({
 
       {/* Card */}
       <div
+        ref={cardRef}
         key={musical.id}
         className={[
           "explore-card",
           musical.image_url ? "explore-card--has-image" : "",
-          phase === "success" ? "explore-card--success" : "",
+          phase === "success" && !swipedDirection ? "explore-card--success" : "",
+          swipedDirection === "right" ? "explore-card--swipe-right" : "",
+          swipedDirection === "left" ? "explore-card--swipe-left" : "",
+          swipedDirection === "up" ? "explore-card--swipe-up" : "",
         ]
           .filter(Boolean)
           .join(" ")}
       >
+        {/* Swipe indicator overlays */}
+        <div className="explore-swipe-indicator explore-swipe-indicator--right">
+          Seen
+        </div>
+        <div className="explore-swipe-indicator explore-swipe-indicator--left">
+          Skip
+        </div>
+        <div className="explore-swipe-indicator explore-swipe-indicator--up">
+          Want to See
+        </div>
+
         {/* Poster */}
         <div className="explore-card-poster">
           {musical.image_url ? (
@@ -360,7 +631,7 @@ export default function ExploreCarousel({
         </div>
 
         {/* Star selector */}
-        <div className="explore-star-row">
+        <div className={`explore-star-row${starRowHint ? " explore-star-row--hint" : ""}`}>
           <span className="explore-star-label">Your rating</span>
           <StarRatingInput
             value={selectedRating}
@@ -397,6 +668,13 @@ export default function ExploreCarousel({
           </button>
         </div>
       </div>
+
+      {/* Rate-first hint toast */}
+      {showRateHint && (
+        <div className="explore-hint-toast" role="status">
+          Rate this show first to mark as seen
+        </div>
+      )}
 
       {/* Error toast */}
       {phase === "error" && errorMsg && (

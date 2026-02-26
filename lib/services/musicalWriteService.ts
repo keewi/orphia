@@ -296,6 +296,50 @@ export async function editReview({
 }
 
 /**
+ * Update only the rating of an existing review.
+ * Does not touch review_text or watch_date.
+ */
+export async function updateRatingOnly({
+  userId,
+  reviewId,
+  ratingInt,
+}: {
+  userId: string;
+  reviewId: string;
+  ratingInt: number;
+}): Promise<{ success: boolean }> {
+  if (ratingInt < 1 || ratingInt > 5 || !Number.isInteger(ratingInt)) {
+    throw new Error("ratingInt must be an integer between 1 and 5");
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_reviews")
+    .update({ rating_int: ratingInt })
+    .eq("id", reviewId)
+    .eq("user_id", userId);
+
+  if (!error) return { success: true };
+
+  if (isTableMissing(error)) {
+    const { error: legacyError } = await supabase
+      .from("reviews")
+      .update({ rating: ratingInt })
+      .eq("id", reviewId)
+      .eq("user_id", userId);
+
+    if (legacyError) {
+      throw new Error(
+        `Failed to update rating (legacy): ${legacyError.message}`,
+      );
+    }
+    return { success: true };
+  }
+
+  throw new Error(`Failed to update rating: ${error.message}`);
+}
+
+/**
  * Remove a musical status entry entirely (for undo).
  */
 export async function removeStatus({

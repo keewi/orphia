@@ -1357,6 +1357,105 @@ body {
   letter-spacing: 1px;
 }
 
+/* ── Interactive gallery tile (My Playbills) ── */
+
+.gallery-tile--interactive {
+  position: relative;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.gallery-tile--interactive:hover {
+  box-shadow: var(--shadow-hover), 0 0 12px var(--gold-glow);
+  border-color: rgba(244, 197, 66, 0.12);
+}
+
+/* Remove button — hidden by default, top-right over poster */
+
+.gallery-tile-remove {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 3;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.gallery-tile--interactive:hover .gallery-tile-remove,
+.gallery-tile-remove:focus-visible {
+  opacity: 1;
+}
+
+.gallery-tile-remove--confirming {
+  opacity: 1 !important;
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+}
+
+@media (hover: none) {
+  .gallery-tile-remove {
+    opacity: 0.35;
+  }
+}
+
+/* Poster as link */
+
+.gallery-poster--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Title as link */
+
+.gallery-tile-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ── Compact star selector (gallery tiles) ── */
+
+.gallery-stars {
+  display: flex;
+  gap: 0;
+}
+
+.gallery-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.05rem;
+  color: rgba(255, 255, 255, 0.2);
+  transition: color 0.12s;
+}
+
+.gallery-star:hover {
+  transform: scale(1.1);
+}
+
+.gallery-star--filled {
+  color: var(--accent);
+  text-shadow: 0 0 4px var(--gold-glow);
+}
+
+.gallery-star:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 /* Disabled button state */
 .btn-submit:disabled {
   opacity: 0.6;
@@ -1975,6 +2074,124 @@ body {
 .explore-card--success {
   animation: exploreSuccessGlow 0.4s ease both;
   pointer-events: none;
+}
+
+/* ── Swipe gesture ── */
+
+.explore-card--swiping {
+  transition: none !important;
+  animation: none !important;
+  transform: translate(var(--swipe-x, 0px), var(--swipe-y, 0px))
+             rotate(var(--swipe-rotate, 0deg));
+  will-change: transform;
+}
+
+.explore-card--bounce-back {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transform: translate(0px, 0px) rotate(0deg);
+}
+
+/* Swipe indicator overlays */
+
+.explore-swipe-indicator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  pointer-events: none;
+  z-index: 5;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.explore-swipe-indicator--right {
+  background: rgba(244, 197, 66, 0.12);
+  color: var(--accent);
+  border: 2.5px solid var(--accent);
+  opacity: var(--swipe-right-opacity, 0);
+}
+
+.explore-swipe-indicator--left {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 2.5px solid rgba(255, 255, 255, 0.15);
+  opacity: var(--swipe-left-opacity, 0);
+}
+
+.explore-swipe-indicator--up {
+  background: rgba(244, 197, 66, 0.08);
+  color: var(--accent);
+  border: 2.5px solid rgba(244, 197, 66, 0.25);
+  opacity: var(--swipe-up-opacity, 0);
+}
+
+/* Swipe-out exit animations */
+
+@keyframes swipeOutRight {
+  to { transform: translateX(120%) rotate(18deg); opacity: 0; }
+}
+
+@keyframes swipeOutLeft {
+  to { transform: translateX(-120%) rotate(-18deg); opacity: 0; }
+}
+
+@keyframes swipeOutUp {
+  to { transform: translateY(-120%); opacity: 0; }
+}
+
+.explore-card--swipe-right {
+  animation: swipeOutRight 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+.explore-card--swipe-left {
+  animation: swipeOutLeft 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+.explore-card--swipe-up {
+  animation: swipeOutUp 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Star row hint pulse (rate-first nudge) */
+
+@keyframes starHintPulse {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(244, 197, 66, 0.08); }
+}
+
+.explore-star-row--hint {
+  animation: starHintPulse 0.75s ease 2;
+  border-radius: 8px;
+}
+
+/* Hint toast (gold variant for swipe feedback) */
+
+.explore-hint-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  background: rgba(244, 197, 66, 0.08);
+  border: 1px solid rgba(244, 197, 66, 0.18);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.2s ease both;
+}
+
+/* Card needs position:relative for indicator overlays */
+
+.explore-card {
+  position: relative;
 }
 
 /* ── Error toast ── */
