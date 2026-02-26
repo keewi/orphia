@@ -10,9 +10,6 @@ export interface Review {
   watch_date: string | null;
 }
 
-/** @deprecated Import StarRating from "@/app/components/StarRating" directly. */
-export { default as Stars } from "@/app/components/StarRating";
-
 export default function ReviewCards({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
     return (
