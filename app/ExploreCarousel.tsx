@@ -69,6 +69,7 @@ function useSwipeGesture({
   cardRef,
   disabledRef,
   selectedRatingRef,
+  exitDurationRef,
   onSwipeRight,
   onSwipeLeft,
   onSwipeUp,
@@ -77,6 +78,7 @@ function useSwipeGesture({
   cardRef: React.RefObject<HTMLDivElement | null>;
   disabledRef: React.MutableRefObject<boolean>;
   selectedRatingRef: React.MutableRefObject<number | null>;
+  exitDurationRef: React.MutableRefObject<number>;
   onSwipeRight: () => void;
   onSwipeLeft: () => void;
   onSwipeUp: () => void;
@@ -282,6 +284,10 @@ function useSwipeGesture({
           Math.min(EXIT_DURATION_MAX_MS, 450 - speed * 0.15),
         );
 
+        // Store exit duration so the parent can delay card-advance until the
+        // CSS transition finishes (prevents React from unmounting mid-flight)
+        exitDurationRef.current = exitDuration;
+
         // 6. Compute exit target (fly off screen from current position)
         let exitTransform: string;
         if (direction === "right") {
@@ -323,7 +329,7 @@ function useSwipeGesture({
       card.removeEventListener("touchmove", onTouchMove);
       card.removeEventListener("touchend", onTouchEnd);
     };
-  }, [cardRef, disabledRef, selectedRatingRef, onSwipeRight, onSwipeLeft, onSwipeUp, onSwipeRightBlocked]);
+  }, [cardRef, disabledRef, selectedRatingRef, exitDurationRef, onSwipeRight, onSwipeLeft, onSwipeUp, onSwipeRightBlocked]);
 
   return { swipedDirection, clearSwipedDirection: () => setSwipedDirection(null) };
 }
@@ -334,16 +340,16 @@ type ConfettiType = "skipped" | "want_to_see" | "seen";
 
 const CONFETTI_PALETTE: Record<ConfettiType, string[]> = {
   skipped: [
-    "rgba(158,154,144,0.3)",
-    "rgba(255,255,255,0.12)",
-    "rgba(158,154,144,0.18)",
+    "rgba(158,154,144,0.5)",
+    "rgba(255,255,255,0.25)",
+    "rgba(158,154,144,0.35)",
   ],
-  want_to_see: ["#F4C542", "#FFD86B", "#FFE7A8", "rgba(244,197,66,0.6)"],
-  seen: ["#F4C542", "#FFD86B", "#7A0F1D", "#FFE7A8", "rgba(244,197,66,0.85)"],
+  want_to_see: ["#F4C542", "#FFD86B", "#FFE7A8", "rgba(244,197,66,0.7)"],
+  seen: ["#F4C542", "#FFD86B", "#7A0F1D", "#FFE7A8", "rgba(244,197,66,0.9)"],
 };
 
 function generateConfetti(type: ConfettiType) {
-  const count = type === "skipped" ? 5 : type === "want_to_see" ? 10 : 16;
+  const count = type === "skipped" ? 8 : type === "want_to_see" ? 14 : 22;
   const palette = CONFETTI_PALETTE[type];
   const particles = [];
 
@@ -351,20 +357,20 @@ function generateConfetti(type: ConfettiType) {
     const angle = Math.random() * Math.PI * 2;
     const dist =
       type === "skipped"
-        ? 20 + Math.random() * 40
+        ? 30 + Math.random() * 50
         : type === "want_to_see"
-          ? 30 + Math.random() * 70
-          : 40 + Math.random() * 110;
+          ? 50 + Math.random() * 90
+          : 60 + Math.random() * 140;
 
     // Directional bias matching the swipe gesture
     let bx = 0,
       by = 0;
     if (type === "skipped") {
-      bx = -20 - Math.random() * 15;
-      by = 8 + Math.random() * 12;
+      bx = -25 - Math.random() * 20;
+      by = 10 + Math.random() * 15;
     }
     if (type === "want_to_see") {
-      by = -40 - Math.random() * 30;
+      by = -50 - Math.random() * 40;
     }
 
     particles.push({
@@ -373,25 +379,25 @@ function generateConfetti(type: ConfettiType) {
       r: type === "skipped" ? 0 : Math.random() * 540 - 270,
       delay:
         Math.random() *
-        (type === "seen" ? 40 : type === "want_to_see" ? 30 : 20),
+        (type === "seen" ? 50 : type === "want_to_see" ? 40 : 25),
       size:
         type === "skipped"
-          ? 2.5 + Math.random() * 2
+          ? 4 + Math.random() * 3.5
           : type === "want_to_see"
-            ? 3 + Math.random() * 3.5
-            : 4 + Math.random() * 5,
+            ? 5 + Math.random() * 5
+            : 6 + Math.random() * 8,
       color: palette[Math.floor(Math.random() * palette.length)],
       dur:
         type === "skipped"
-          ? 250 + Math.random() * 100
+          ? 350 + Math.random() * 150
           : type === "want_to_see"
-            ? 300 + Math.random() * 150
-            : 350 + Math.random() * 150,
-      sx: 50 + (Math.random() - 0.5) * 20,
+            ? 400 + Math.random() * 200
+            : 450 + Math.random() * 250,
+      sx: 50 + (Math.random() - 0.5) * 24,
       sy:
         type === "want_to_see"
-          ? 38 + Math.random() * 14
-          : 44 + (Math.random() - 0.5) * 14,
+          ? 36 + Math.random() * 16
+          : 42 + (Math.random() - 0.5) * 16,
       round: type === "skipped" || Math.random() > 0.45,
     });
   }
@@ -581,11 +587,18 @@ export default function ExploreCarousel({
       }
 
       if (isSwipe) {
-        // ── Optimistic: advance card immediately, server syncs in background ──
-        setSelectedRating(null);
-        setCurrentIndex((i) => i + 1);
+        // ── Optimistic: delay card advance until CSS exit transition finishes,
+        //    so React doesn't unmount the card mid-flight. Server syncs in background. ──
         setPhase("idle");
-        inFlight.current = false;
+
+        const delay = exitDurationRef.current;
+        exitDurationRef.current = 0;
+
+        setTimeout(() => {
+          setSelectedRating(null);
+          setCurrentIndex((i) => i + 1);
+          inFlight.current = false;
+        }, delay);
 
         action()
           .then(onSuccess)
@@ -679,6 +692,7 @@ export default function ExploreCarousel({
   disabledRef.current = disabled;
   const selectedRatingRef = useRef(selectedRating);
   selectedRatingRef.current = selectedRating;
+  const exitDurationRef = useRef(0);
 
   const [showRateHint, setShowRateHint] = useState(false);
   const [starRowHint, setStarRowHint] = useState(false);
@@ -726,6 +740,7 @@ export default function ExploreCarousel({
     cardRef,
     disabledRef,
     selectedRatingRef,
+    exitDurationRef,
     onSwipeRight: swipeRight,
     onSwipeLeft: swipeLeft,
     onSwipeUp: swipeUp,
@@ -742,7 +757,7 @@ export default function ExploreCarousel({
   // Auto-clear confetti after animations finish
   useEffect(() => {
     if (!confetti) return;
-    const timer = setTimeout(() => setConfetti(null), 600);
+    const timer = setTimeout(() => setConfetti(null), 800);
     return () => clearTimeout(timer);
   }, [confetti]);
 

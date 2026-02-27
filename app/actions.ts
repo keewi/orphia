@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
   markSeen,
@@ -114,6 +115,7 @@ export async function exploreWantToSee(
     userId: user.id,
     musicalId,
   });
+  revalidatePath("/");
   return { ok: true, actionType: "want_to_see", musicalId, previousStatus };
 }
 
@@ -130,6 +132,7 @@ export async function exploreSkip(
     userId: user.id,
     musicalId,
   });
+  revalidatePath("/");
   return { ok: true, actionType: "skipped", musicalId, previousStatus };
 }
 
@@ -148,6 +151,7 @@ export async function exploreSeen(
     musicalId,
     ratingInt,
   });
+  revalidatePath("/");
   return {
     ok: true,
     actionType: "seen",
@@ -191,5 +195,6 @@ export async function exploreUndo(payload: {
     });
   }
 
+  revalidatePath("/");
   return { ok: true };
 }
