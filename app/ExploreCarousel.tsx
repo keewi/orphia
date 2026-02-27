@@ -301,13 +301,12 @@ function useSwipeGesture({
         // 8. Set direction state immediately (for parent className guard)
         setSwipedDirection(direction);
 
-        // 9. Fire action callback AFTER the card has visually exited the screen.
-        //    This prevents React re-renders from interrupting the exit animation.
-        setTimeout(() => {
-          if (direction === "right") onSwipeRight();
-          else if (direction === "left") onSwipeLeft();
-          else if (direction === "up") onSwipeUp();
-        }, exitDuration);
+        // 9. Fire action immediately — the server call overlaps with the exit
+        //    animation so the next card appears right after the exit completes.
+        //    The swipeInFlight ref tells runAction to use a minimal advance delay.
+        if (direction === "right") onSwipeRight();
+        else if (direction === "left") onSwipeLeft();
+        else if (direction === "up") onSwipeUp();
       } else {
         // Below threshold — snap back with spring bounce
         clearCssVars();
@@ -347,6 +346,7 @@ export default function ExploreCarousel({
 
   // Refs for guards and timers
   const inFlight = useRef(false);
+  const swipeInFlight = useRef(false); // true when current action was triggered by swipe
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checkpointShown = useRef(false);
   const sessionId = useRef(crypto.randomUUID());
@@ -429,55 +429,81 @@ export default function ExploreCarousel({
       // Dismiss any existing undo toast — that action is now permanent
       clearUndo();
 
+      const isSwipe = swipeInFlight.current;
+      swipeInFlight.current = false;
+
+      // Shared post-action handler
+      function onSuccess(result: {
+        actionType: "want_to_see" | "skipped" | "seen";
+        musicalId: string;
+        previousStatus: MusicalStatusValue | null;
+        reviewId?: string;
+        ratingInt?: number;
+      }) {
+        // Analytics
+        if (result.actionType === "seen" && result.reviewId) {
+          emit("explore_action_seen", {
+            musicalId: result.musicalId,
+            ratingInt: result.ratingInt ?? 0,
+            reviewId: result.reviewId,
+          });
+        } else if (result.actionType === "want_to_see") {
+          emit("explore_action_want", { musicalId: result.musicalId });
+        } else if (result.actionType === "skipped") {
+          emit("explore_action_skip", { musicalId: result.musicalId });
+        }
+
+        // Track "seen" for session progress
+        if (result.actionType === "seen") {
+          setSeenThisSession((prev) => {
+            const next = prev + 1;
+            if (next === CHECKPOINT_AT && !checkpointShown.current) {
+              checkpointShown.current = true;
+              setShowCheckpoint(true);
+            }
+            return next;
+          });
+        }
+
+        // Undo payload + status badge
+        setUndoPayload({
+          actionType: result.actionType,
+          musicalId: result.musicalId,
+          previousStatus: result.previousStatus,
+          reviewId: result.reviewId,
+        });
+        setLastAction({ actionType: result.actionType, title: musicalTitle });
+      }
+
+      if (isSwipe) {
+        // ── Optimistic: advance card immediately, server syncs in background ──
+        setSelectedRating(null);
+        setCurrentIndex((i) => i + 1);
+        setPhase("idle");
+        inFlight.current = false;
+
+        action()
+          .then(onSuccess)
+          .catch((err) => {
+            setPhase("error");
+            setErrorMsg(
+              err instanceof Error ? err.message : "Something went wrong",
+            );
+          });
+        return;
+      }
+
+      // ── Button clicks: wait for server, show success glow, then advance ──
       try {
         const result = await action();
 
-        // Brief success flash, then advance + show undo toast
         setPhase("success");
         setTimeout(() => {
           setSelectedRating(null);
           setCurrentIndex((i) => i + 1);
           setPhase("idle");
           inFlight.current = false;
-
-          // Analytics: action events
-          if (result.actionType === "seen" && result.reviewId) {
-            emit("explore_action_seen", {
-              musicalId: result.musicalId,
-              ratingInt: result.ratingInt ?? 0,
-              reviewId: result.reviewId,
-            });
-          } else if (result.actionType === "want_to_see") {
-            emit("explore_action_want", { musicalId: result.musicalId });
-          } else if (result.actionType === "skipped") {
-            emit("explore_action_skip", { musicalId: result.musicalId });
-          }
-
-          // Track "seen" actions for session progress
-          if (result.actionType === "seen") {
-            setSeenThisSession((prev) => {
-              const next = prev + 1;
-              // Show checkpoint modal once at the threshold
-              if (next === CHECKPOINT_AT && !checkpointShown.current) {
-                checkpointShown.current = true;
-                setShowCheckpoint(true);
-              }
-              return next;
-            });
-          }
-
-          // Show persistent status badge + undo option
-          const payload: UndoPayload = {
-            actionType: result.actionType,
-            musicalId: result.musicalId,
-            previousStatus: result.previousStatus,
-            reviewId: result.reviewId,
-          };
-          setUndoPayload(payload);
-          setLastAction({
-            actionType: result.actionType,
-            title: musicalTitle,
-          });
+          onSuccess(result);
         }, 400);
       } catch (err) {
         setPhase("error");
@@ -570,18 +596,21 @@ export default function ExploreCarousel({
   const swipeRight = useCallback(() => {
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "right" });
+    swipeInFlight.current = true;
     handleSeen();
   }, [musicals, currentIndex, emit, handleSeen]);
 
   const swipeLeft = useCallback(() => {
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "left" });
+    swipeInFlight.current = true;
     handleSkip();
   }, [musicals, currentIndex, emit, handleSkip]);
 
   const swipeUp = useCallback(() => {
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "up" });
+    swipeInFlight.current = true;
     handleWantToSee();
   }, [musicals, currentIndex, emit, handleWantToSee]);
 

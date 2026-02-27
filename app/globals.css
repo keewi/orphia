@@ -1872,7 +1872,7 @@ body {
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow);
   overflow: hidden;
-  animation: fadeInUp 0.35s ease both;
+  animation: fadeInUp 0.3s ease-out both;
 }
 
 .explore-card-poster {
