@@ -389,10 +389,10 @@ function generateConfetti(type: ConfettiType) {
       color: palette[Math.floor(Math.random() * palette.length)],
       dur:
         type === "skipped"
-          ? 350 + Math.random() * 150
+          ? 525 + Math.random() * 225
           : type === "want_to_see"
-            ? 400 + Math.random() * 200
-            : 450 + Math.random() * 250,
+            ? 600 + Math.random() * 300
+            : 675 + Math.random() * 375,
       sx: 50 + (Math.random() - 0.5) * 24,
       sy:
         type === "want_to_see"
@@ -588,8 +588,8 @@ export default function ExploreCarousel({
 
       if (isSwipe) {
         // ── Optimistic: delay card advance until CSS exit transition finishes,
-        //    so React doesn't unmount the card mid-flight. Server syncs in background. ──
-        setPhase("idle");
+        //    so React doesn't unmount the card mid-flight. Server syncs in background.
+        //    Keep phase="busy" during the delay so touch gestures stay disabled. ──
 
         const delay = exitDurationRef.current;
         exitDurationRef.current = 0;
@@ -597,6 +597,7 @@ export default function ExploreCarousel({
         setTimeout(() => {
           setSelectedRating(null);
           setCurrentIndex((i) => i + 1);
+          setPhase("idle");
           inFlight.current = false;
         }, delay);
 
@@ -713,6 +714,7 @@ export default function ExploreCarousel({
   }, [musicals, currentIndex, emit]);
 
   const swipeRight = useCallback(() => {
+    if (inFlight.current) return;
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "right" });
     swipeInFlight.current = true;
@@ -721,6 +723,7 @@ export default function ExploreCarousel({
   }, [musicals, currentIndex, emit, handleSeen]);
 
   const swipeLeft = useCallback(() => {
+    if (inFlight.current) return;
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "left" });
     swipeInFlight.current = true;
@@ -729,6 +732,7 @@ export default function ExploreCarousel({
   }, [musicals, currentIndex, emit, handleSkip]);
 
   const swipeUp = useCallback(() => {
+    if (inFlight.current) return;
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "up" });
     swipeInFlight.current = true;
@@ -757,7 +761,7 @@ export default function ExploreCarousel({
   // Auto-clear confetti after animations finish
   useEffect(() => {
     if (!confetti) return;
-    const timer = setTimeout(() => setConfetti(null), 800);
+    const timer = setTimeout(() => setConfetti(null), 1200);
     return () => clearTimeout(timer);
   }, [confetti]);
 
