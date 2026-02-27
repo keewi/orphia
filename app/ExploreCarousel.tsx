@@ -328,6 +328,107 @@ function useSwipeGesture({
   return { swipedDirection, clearSwipedDirection: () => setSwipedDirection(null) };
 }
 
+/* ── Swipe confetti ── */
+
+type ConfettiType = "skipped" | "want_to_see" | "seen";
+
+const CONFETTI_PALETTE: Record<ConfettiType, string[]> = {
+  skipped: [
+    "rgba(158,154,144,0.3)",
+    "rgba(255,255,255,0.12)",
+    "rgba(158,154,144,0.18)",
+  ],
+  want_to_see: ["#F4C542", "#FFD86B", "#FFE7A8", "rgba(244,197,66,0.6)"],
+  seen: ["#F4C542", "#FFD86B", "#7A0F1D", "#FFE7A8", "rgba(244,197,66,0.85)"],
+};
+
+function generateConfetti(type: ConfettiType) {
+  const count = type === "skipped" ? 5 : type === "want_to_see" ? 10 : 16;
+  const palette = CONFETTI_PALETTE[type];
+  const particles = [];
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist =
+      type === "skipped"
+        ? 20 + Math.random() * 40
+        : type === "want_to_see"
+          ? 30 + Math.random() * 70
+          : 40 + Math.random() * 110;
+
+    // Directional bias matching the swipe gesture
+    let bx = 0,
+      by = 0;
+    if (type === "skipped") {
+      bx = -20 - Math.random() * 15;
+      by = 8 + Math.random() * 12;
+    }
+    if (type === "want_to_see") {
+      by = -40 - Math.random() * 30;
+    }
+
+    particles.push({
+      x: Math.cos(angle) * dist + bx,
+      y: Math.sin(angle) * dist + by,
+      r: type === "skipped" ? 0 : Math.random() * 540 - 270,
+      delay:
+        Math.random() *
+        (type === "seen" ? 40 : type === "want_to_see" ? 30 : 20),
+      size:
+        type === "skipped"
+          ? 2.5 + Math.random() * 2
+          : type === "want_to_see"
+            ? 3 + Math.random() * 3.5
+            : 4 + Math.random() * 5,
+      color: palette[Math.floor(Math.random() * palette.length)],
+      dur:
+        type === "skipped"
+          ? 250 + Math.random() * 100
+          : type === "want_to_see"
+            ? 300 + Math.random() * 150
+            : 350 + Math.random() * 150,
+      sx: 50 + (Math.random() - 0.5) * 20,
+      sy:
+        type === "want_to_see"
+          ? 38 + Math.random() * 14
+          : 44 + (Math.random() - 0.5) * 14,
+      round: type === "skipped" || Math.random() > 0.45,
+    });
+  }
+
+  return particles;
+}
+
+function SwipeConfetti({ type }: { type: ConfettiType }) {
+  const [particles] = useState(() => generateConfetti(type));
+
+  return (
+    <div className="explore-confetti" aria-hidden="true">
+      {particles.map((p, i) => (
+        <span
+          key={i}
+          className={`explore-confetti-p explore-confetti-p--${type}`}
+          style={
+            {
+              "--cx": `${p.x}px`,
+              "--cy": `${p.y}px`,
+              "--cr": `${p.r}deg`,
+              "--cd": `${p.dur}ms`,
+              "--cdl": `${p.delay}ms`,
+              left: `${p.sx}%`,
+              top: `${p.sy}%`,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: p.color,
+              borderRadius: p.round ? "50%" : "2px",
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function ExploreCarousel({
   musicals,
   userId,
@@ -343,6 +444,10 @@ export default function ExploreCarousel({
   const [undoing, setUndoing] = useState(false);
   const [seenThisSession, setSeenThisSession] = useState(0);
   const [showCheckpoint, setShowCheckpoint] = useState(false);
+  const [confetti, setConfetti] = useState<{
+    type: ConfettiType;
+    key: number;
+  } | null>(null);
 
   // Refs for guards and timers
   const inFlight = useRef(false);
@@ -597,6 +702,7 @@ export default function ExploreCarousel({
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "right" });
     swipeInFlight.current = true;
+    setConfetti({ type: "seen", key: Date.now() });
     handleSeen();
   }, [musicals, currentIndex, emit, handleSeen]);
 
@@ -604,6 +710,7 @@ export default function ExploreCarousel({
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "left" });
     swipeInFlight.current = true;
+    setConfetti({ type: "skipped", key: Date.now() });
     handleSkip();
   }, [musicals, currentIndex, emit, handleSkip]);
 
@@ -611,6 +718,7 @@ export default function ExploreCarousel({
     const m = musicals[currentIndex];
     if (m) emit("explore_swipe_triggered", { musicalId: m.id, direction: "up" });
     swipeInFlight.current = true;
+    setConfetti({ type: "want_to_see", key: Date.now() });
     handleWantToSee();
   }, [musicals, currentIndex, emit, handleWantToSee]);
 
@@ -630,6 +738,13 @@ export default function ExploreCarousel({
     setShowRateHint(false);
     setStarRowHint(false);
   }, [currentIndex, clearSwipedDirection]);
+
+  // Auto-clear confetti after animations finish
+  useEffect(() => {
+    if (!confetti) return;
+    const timer = setTimeout(() => setConfetti(null), 600);
+    return () => clearTimeout(timer);
+  }, [confetti]);
 
   // Analytics: onboarding completed (fires once when all cards exhausted)
   useEffect(() => {
@@ -716,6 +831,9 @@ export default function ExploreCarousel({
           {seenThisSession} / {SEEN_GOAL} seen this session
         </span>
       </div>
+
+      {/* Swipe confetti */}
+      {confetti && <SwipeConfetti key={confetti.key} type={confetti.type} />}
 
       {/* Card */}
       <div

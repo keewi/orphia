@@ -1852,6 +1852,7 @@ body {
    ══════════════════════════════════════════════ */
 
 .explore-carousel {
+  position: relative;
   max-width: 480px;
   margin: 0 auto;
 }
@@ -2384,4 +2385,57 @@ body {
 
 .explore-checkpoint-secondary:hover {
   color: var(--accent);
+}
+
+/* ── Swipe confetti ── */
+
+.explore-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.explore-confetti-p {
+  position: absolute;
+  display: block;
+}
+
+/* Skip — gentle dust-mote drift */
+
+.explore-confetti-p--skipped {
+  animation: confettiDrift var(--cd) ease-out var(--cdl) both;
+}
+
+@keyframes confettiDrift {
+  0%   { transform: translate(0, 0) scale(0.8); opacity: 0.45; }
+  40%  { opacity: 0.3; }
+  100% { transform: translate(var(--cx), var(--cy)); opacity: 0; }
+}
+
+/* Want to See — stage-light sparkle rise */
+
+.explore-confetti-p--want_to_see {
+  animation: confettiRise var(--cd) ease-out var(--cdl) both;
+}
+
+@keyframes confettiRise {
+  0%   { transform: translate(0, 0) scale(0); opacity: 0; }
+  18%  { transform: translate(calc(var(--cx) * 0.15), calc(var(--cy) * 0.15)) scale(1.15); opacity: 1; }
+  55%  { opacity: 0.7; }
+  100% { transform: translate(var(--cx), var(--cy)) scale(0.35); opacity: 0; }
+}
+
+/* Seen — curtain-call celebration burst */
+
+.explore-confetti-p--seen {
+  animation: confettiBurst var(--cd) ease-out var(--cdl) both;
+}
+
+@keyframes confettiBurst {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(0); opacity: 1; }
+  12%  { transform: translate(calc(var(--cx) * 0.2), calc(var(--cy) * 0.2)) rotate(calc(var(--cr) * 0.2)) scale(1); opacity: 1; }
+  55%  { opacity: 0.7; }
+  100% { transform: translate(var(--cx), var(--cy)) rotate(var(--cr)) scale(0.25); opacity: 0; }
 }
