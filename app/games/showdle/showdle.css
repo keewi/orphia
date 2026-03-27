@@ -1,0 +1,435 @@
+/* ── Showdle: Isolated design system ─────────────────────
+   All classes prefixed with sd- to avoid host app collisions.
+   This file is imported ONLY by the Showdle layout. */
+
+/* ── Tokens ──────────────────────────────────────────── */
+:root {
+  --sd-ink: #1a1108;
+  --sd-cream: #faf5ee;
+  --sd-surface: #ffffff;
+  --sd-parchment: #f0e8d8;
+  --sd-border: #d4c9b8;
+  --sd-border-light: #e0d5c4;
+  --sd-gold: #c8922a;
+  --sd-gold-light: #f0c060;
+  --sd-gold-muted: #a08060;
+  --sd-absent: #e8e0d4;
+  --sd-absent-text: #908070;
+  --sd-absent-border: #ccc4b4;
+  --sd-success: #2d6a2d;
+  --sd-success-bg: #eaf3e0;
+  --sd-error: #b03a2e;
+  --sd-error-bg: #fbeae8;
+  --sd-hint: #5a7fb5;
+  --sd-hint-bg: #eef2fa;
+  --sd-diff-easy: #2d6a2d;
+  --sd-diff-easy-bg: #eaf3e0;
+  --sd-diff-medium: #a07010;
+  --sd-diff-medium-bg: #fdf3d8;
+  --sd-diff-hard: #b03a2e;
+  --sd-diff-hard-bg: #fbeae8;
+}
+
+/* ── Host app isolation ──────────────────────────────── */
+.sd-root .site-header,
+.sd-root ~ .site-header {
+  display: none !important;
+}
+
+/* ── Layout ──────────────────────────────────────────── */
+.sd-root {
+  background: var(--sd-cream);
+  min-height: 100dvh;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--sd-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sd-container {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.sd-header {
+  background: var(--sd-ink);
+  padding: 18px 20px 14px;
+  text-align: center;
+  border-bottom: 1px solid var(--sd-gold);
+}
+
+.sd-header-logo {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--sd-cream);
+  letter-spacing: 7px;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1;
+}
+
+.sd-header-subline {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--sd-gold);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.sd-header-date {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--sd-gold-muted);
+  margin-top: 4px;
+}
+
+/* ── Lyric Box ───────────────────────────────────────── */
+.sd-lyric-box {
+  background: var(--sd-surface);
+  border: 1px solid var(--sd-border-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+}
+
+.sd-lyric-text {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--sd-ink);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.sd-lyric-blank {
+  display: inline-block;
+  min-width: 16px;
+  border-bottom: 2px solid var(--sd-ink);
+  margin: 0 2px;
+}
+
+/* ── Game Board ──────────────────────────────────────── */
+.sd-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 16px;
+}
+
+.sd-board-row {
+  display: flex;
+  gap: 5px;
+}
+
+/* ── Tile ────────────────────────────────────────────── */
+.sd-tile {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1.5px solid var(--sd-border);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: uppercase;
+  background: var(--sd-surface);
+  color: var(--sd-ink);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.sd-tile--filled {
+  border-color: var(--sd-ink);
+}
+
+.sd-tile--correct {
+  background: var(--sd-ink);
+  border-color: var(--sd-ink);
+  color: var(--sd-cream);
+}
+
+.sd-tile--present {
+  background: var(--sd-gold);
+  border-color: var(--sd-gold);
+  color: white;
+}
+
+.sd-tile--absent {
+  background: var(--sd-absent);
+  border-color: var(--sd-absent-border);
+  color: var(--sd-absent-text);
+}
+
+/* Flip animation */
+@keyframes sd-tile-flip {
+  0%   { transform: rotateX(0deg); }
+  50%  { transform: rotateX(-90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.sd-tile--flip {
+  animation: sd-tile-flip 0.4s ease;
+}
+
+/* ── Keyboard ────────────────────────────────────────── */
+.sd-keyboard {
+  padding: 8px 6px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  background: var(--sd-cream);
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+}
+
+.sd-keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.sd-key {
+  height: 32px;
+  min-width: 26px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--sd-border);
+  background: var(--sd-surface);
+  color: var(--sd-ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sd-key:hover {
+  background: var(--sd-parchment);
+}
+
+.sd-key:active {
+  transform: scale(0.96);
+}
+
+.sd-key--wide {
+  min-width: 38px;
+  font-size: 9px;
+}
+
+.sd-key--correct {
+  background: var(--sd-ink);
+  border-color: var(--sd-ink);
+  color: var(--sd-cream);
+}
+
+.sd-key--present {
+  background: var(--sd-gold);
+  border-color: var(--sd-gold);
+  color: white;
+}
+
+.sd-key--absent {
+  background: var(--sd-absent);
+  border-color: var(--sd-absent-border);
+  color: var(--sd-absent-text);
+}
+
+/* ── Toast ───────────────────────────────────────────── */
+.sd-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sd-ink);
+  color: var(--sd-cream);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 50;
+  animation: sd-toast-in 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.sd-toast--out {
+  animation: sd-toast-out 0.3s ease forwards;
+}
+
+@keyframes sd-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes sd-toast-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── RevealModal ─────────────────────────────────────── */
+.sd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 17, 8, 0.55);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.sd-modal-panel {
+  background: var(--sd-cream);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  animation: sd-modal-enter 0.25s ease;
+}
+
+@keyframes sd-modal-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sd-modal-result {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--sd-ink);
+  margin: 0 0 12px;
+}
+
+.sd-modal-show {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sd-ink);
+  margin: 0 0 4px;
+}
+
+.sd-modal-detail {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--sd-gold-muted);
+  margin: 0 0 12px;
+}
+
+.sd-modal-badge {
+  display: inline-block;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.sd-badge--easy {
+  color: var(--sd-diff-easy);
+  background: var(--sd-diff-easy-bg);
+}
+
+.sd-badge--medium {
+  color: var(--sd-diff-medium);
+  background: var(--sd-diff-medium-bg);
+}
+
+.sd-badge--hard {
+  color: var(--sd-diff-hard);
+  background: var(--sd-diff-hard-bg);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.sd-btn {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 6px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  border: none;
+}
+
+.sd-btn:active {
+  transform: scale(0.98);
+}
+
+.sd-btn--primary {
+  background: var(--sd-gold);
+  color: white;
+}
+
+.sd-btn--primary:hover {
+  opacity: 0.88;
+}
+
+.sd-btn--secondary {
+  background: transparent;
+  color: var(--sd-ink);
+  border: 1px solid var(--sd-border);
+}
+
+.sd-btn--secondary:hover {
+  background: var(--sd-parchment);
+}
+
+/* ── Loading skeleton ────────────────────────────────── */
+.sd-skeleton {
+  background: var(--sd-border-light);
+  border-radius: 6px;
+  animation: sd-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sd-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ── Desktop responsive ──────────────────────────────── */
+@media (min-width: 480px) {
+  .sd-header-logo { font-size: 28px; }
+  .sd-lyric-text { font-size: 15px; }
+
+  .sd-tile {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .sd-key {
+    height: 40px;
+    min-width: 36px;
+    font-size: 13px;
+  }
+
+  .sd-key--wide {
+    min-width: 52px;
+    font-size: 11px;
+  }
+
+  .sd-keyboard {
+    position: static;
+    padding-bottom: 16px;
+  }
+}
