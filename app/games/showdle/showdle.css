@@ -16,6 +16,8 @@
   --sd-absent: #e8e0d4;
   --sd-absent-text: #908070;
   --sd-absent-border: #ccc4b4;
+  --sd-correct: #2d6a2d;
+  --sd-correct-light: #4a9a4a;
   --sd-success: #2d6a2d;
   --sd-success-bg: #eaf3e0;
   --sd-error: #b03a2e;
@@ -152,9 +154,9 @@
 }
 
 .sd-tile--correct {
-  background: var(--sd-ink);
-  border-color: var(--sd-ink);
-  color: var(--sd-cream);
+  background: var(--sd-correct);
+  border-color: var(--sd-correct);
+  color: white;
 }
 
 .sd-tile--present {
@@ -231,9 +233,9 @@
 }
 
 .sd-key--correct {
-  background: var(--sd-ink);
-  border-color: var(--sd-ink);
-  color: var(--sd-cream);
+  background: var(--sd-correct);
+  border-color: var(--sd-correct);
+  color: white;
 }
 
 .sd-key--present {
