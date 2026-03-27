@@ -1,10 +1,12 @@
 /**
  * Centralized read service for profiles and the social graph.
  *
- * Server-only: uses the cookie-based Supabase client.
+ * Server-only: uses the Drizzle client with Neon.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { profiles, follows } from "@/lib/db/schema";
+import { eq, inArray, count, desc } from "drizzle-orm";
 
 // ── Row shapes ───────────────────────────────────────────
 
@@ -16,48 +18,33 @@ export interface ProfileRow {
 
 // ── Single profile ───────────────────────────────────────
 
-/**
- * Look up a profile by UUID or by handle (auto-detected).
- */
 export async function getProfileByIdOrHandle(
   param: string,
 ): Promise<ProfileRow | null> {
-  const supabase = createClient();
   const isUUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       param,
     );
 
-  const { data } = isUUID
-    ? await supabase
-        .from("profiles")
-        .select("id, handle, display_name")
-        .eq("id", param)
-        .maybeSingle()
-    : await supabase
-        .from("profiles")
-        .select("id, handle, display_name")
-        .eq("handle", param)
-        .maybeSingle();
+  const rows = await db
+    .select({ id: profiles.id, handle: profiles.handle, display_name: profiles.display_name })
+    .from(profiles)
+    .where(isUUID ? eq(profiles.id, param) : eq(profiles.handle, param))
+    .limit(1);
 
-  return data ?? null;
+  return rows[0] ?? null;
 }
 
-/**
- * Fetch the current user's own profile.
- */
 export async function getProfileById(
   userId: string,
 ): Promise<ProfileRow | null> {
-  const supabase = createClient();
+  const rows = await db
+    .select({ id: profiles.id, handle: profiles.handle, display_name: profiles.display_name })
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name")
-    .eq("id", userId)
-    .maybeSingle();
-
-  return data ?? null;
+  return rows[0] ?? null;
 }
 
 // ── Follow counts ────────────────────────────────────────
@@ -67,80 +54,64 @@ export interface FollowCounts {
   followingCount: number;
 }
 
-/**
- * Get follower and following counts for a user.
- */
 export async function getFollowCounts(userId: string): Promise<FollowCounts> {
-  const supabase = createClient();
-
-  const [{ count: followerCount }, { count: followingCount }] =
-    await Promise.all([
-      supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("following_user_id", userId),
-      supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_user_id", userId),
-    ]);
+  const [followerRows, followingRows] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(follows)
+      .where(eq(follows.following_user_id, userId)),
+    db
+      .select({ count: count() })
+      .from(follows)
+      .where(eq(follows.follower_user_id, userId)),
+  ]);
 
   return {
-    followerCount: followerCount ?? 0,
-    followingCount: followingCount ?? 0,
+    followerCount: followerRows[0]?.count ?? 0,
+    followingCount: followingRows[0]?.count ?? 0,
   };
 }
 
 // ── Social graph ─────────────────────────────────────────
 
-/**
- * Get the list of user IDs the given user is following.
- */
 export async function getFollowedUserIds(userId: string): Promise<string[]> {
-  const supabase = createClient();
+  const rows = await db
+    .select({ following_user_id: follows.following_user_id })
+    .from(follows)
+    .where(eq(follows.follower_user_id, userId));
 
-  const { data } = await supabase
-    .from("follows")
-    .select("following_user_id")
-    .eq("follower_user_id", userId);
-
-  return (data ?? []).map((f) => f.following_user_id);
+  return rows.map((f) => f.following_user_id);
 }
 
-/**
- * Fetch who the user follows, ordered by most-recent, with a limit.
- * Returns { following_user_id, created_at } rows.
- */
 export async function getFollowedUsersOrdered(
   userId: string,
   limit = 50,
 ): Promise<{ following_user_id: string; created_at: string }[]> {
-  const supabase = createClient();
-
-  const { data, error } = await supabase
-    .from("follows")
-    .select("following_user_id, created_at")
-    .eq("follower_user_id", userId)
-    .order("created_at", { ascending: false })
+  const rows = await db
+    .select({
+      following_user_id: follows.following_user_id,
+      created_at: follows.created_at,
+    })
+    .from(follows)
+    .where(eq(follows.follower_user_id, userId))
+    .orderBy(desc(follows.created_at))
     .limit(limit);
 
-  if (error) throw error;
-  return data ?? [];
+  return rows.map((r) => ({
+    following_user_id: r.following_user_id,
+    created_at: r.created_at.toISOString(),
+  }));
 }
 
-/**
- * Batch-fetch profiles by IDs. Returns a Map for O(1) access.
- */
 export async function getProfilesByIds(
   ids: string[],
 ): Promise<Map<string, ProfileRow>> {
   if (ids.length === 0) return new Map();
-  const supabase = createClient();
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name")
-    .in("id", ids);
+  const rows = await db
+    .select({ id: profiles.id, handle: profiles.handle, display_name: profiles.display_name })
+    .from(profiles)
+    .where(inArray(profiles.id, ids));
 
-  return new Map((data ?? []).map((p) => [p.id, p]));
+  return new Map(rows.map((p) => [p.id, p]));
 }

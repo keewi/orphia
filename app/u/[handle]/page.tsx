@@ -1,5 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { follows } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { getUserReviews, getMusicalsByIds } from "@/lib/services/musicalReadService";
 import { getProfileByIdOrHandle, getFollowCounts } from "@/lib/services/profileService";
 import { deriveProfileStats } from "@/lib/profileStats";
@@ -19,16 +22,31 @@ export default async function PublicProfilePage({
   if (!profile) notFound();
 
   // Parallelize: reviews, auth, follow counts
-  const supabase = createClient();
-  const [reviews, { data: { user } }, { followerCount, followingCount }] =
+  const [reviews, session, { followerCount, followingCount }] =
     await Promise.all([
       getUserReviews(profile.id),
-      supabase.auth.getUser(),
+      auth(),
       getFollowCounts(profile.id),
     ]);
 
-  const currentUserId = user?.id ?? null;
+  const currentUserId = session?.user?.id ?? null;
   if (currentUserId === profile.id) redirect("/my-theatre-life");
+
+  // Check if current user follows this profile
+  let initialIsFollowing = false;
+  if (currentUserId && currentUserId !== profile.id) {
+    const row = await db
+      .select({ follower_user_id: follows.follower_user_id })
+      .from(follows)
+      .where(
+        and(
+          eq(follows.follower_user_id, currentUserId),
+          eq(follows.following_user_id, profile.id),
+        ),
+      )
+      .limit(1);
+    initialIsFollowing = row.length > 0;
+  }
 
   const stats = deriveProfileStats(reviews);
 
@@ -49,6 +67,7 @@ export default async function PublicProfilePage({
         <FollowButton
           profileUserId={profile.id}
           currentUserId={currentUserId}
+          initialIsFollowing={initialIsFollowing}
         />
       </ProfileHeader>
 

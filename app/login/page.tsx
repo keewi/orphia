@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
+import { registerUser } from "@/app/actions";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -10,7 +11,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirmationSent, setConfirmationSent] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -18,72 +18,30 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-
     if (isSignUp) {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${siteUrl}/auth/callback`,
-        },
-      });
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-
-      // If no session returned, email confirmation is required
-      if (!data.session) {
-        setConfirmationSent(true);
-        setLoading(false);
-        return;
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError(error.message);
+      const result = await registerUser(email, password);
+      if (!result.ok) {
+        setError(result.error ?? "Sign up failed");
         setLoading(false);
         return;
       }
     }
 
+    // Sign in (or auto-sign-in after registration)
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (res?.error) {
+      setError("Invalid email or password");
+      setLoading(false);
+      return;
+    }
+
     router.push("/");
     router.refresh();
-  }
-
-  // Show confirmation message after successful sign-up
-  if (confirmationSent) {
-    return (
-      <div className="page-container">
-        <div className="login-container">
-          <div className="form-card">
-            <h1>Check Your Email</h1>
-            <p className="login-subtitle" style={{ margin: "0 0 1rem" }}>
-              We sent a confirmation link to <strong>{email}</strong>.
-              Click the link in your email to activate your account,
-              then come back here to sign in.
-            </p>
-            <button
-              type="button"
-              className="btn btn-submit"
-              onClick={() => {
-                setConfirmationSent(false);
-                setIsSignUp(false);
-                setPassword("");
-              }}
-            >
-              Back to Sign In
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (

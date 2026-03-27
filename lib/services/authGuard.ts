@@ -1,20 +1,14 @@
 /**
  * Shared auth guard for Server Components.
  *
- * Returns the authenticated Supabase user or redirects to /login.
- * Replaces the duplicated getUser() + redirect() pattern across pages.
+ * Returns the authenticated user or redirects to /login.
  */
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import type { User } from "@supabase/supabase-js";
+import { auth } from "@/auth";
 
-export async function requireAuth(): Promise<User> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-  return user;
+export async function requireAuth(): Promise<{ id: string; email: string }> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+  return { id: session.user.id, email: session.user.email ?? "" };
 }

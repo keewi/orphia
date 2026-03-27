@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
 import { getAllMusicalsAlpha, getBrowseStatusMap } from "@/lib/services/musicalReadService";
 import type { Musical } from "@/lib/types";
 import SearchableMusicalGrid from "../SearchableMusicalGrid";
@@ -6,14 +6,14 @@ import SearchableMusicalGrid from "../SearchableMusicalGrid";
 export const dynamic = "force-dynamic";
 
 export default async function BrowsePage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await auth();
+  const user = session?.user;
 
   const musicals: Musical[] = await getAllMusicalsAlpha();
 
   // Build status map for the current user
   const statusMap = user
-    ? await getBrowseStatusMap(user.id)
+    ? await getBrowseStatusMap(user.id!)
     : ({} as Record<string, { seenCount: number; savedForLater: boolean }>);
 
   return (
