@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { profiles, follows } from "@/lib/db/schema";
+import { eq, and, count } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   const rawHandle = request.nextUrl.searchParams.get("handle") ?? "";
@@ -12,21 +15,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = createClient();
+  const session = await auth();
+  const user = session?.user;
 
-  // Check if this is the current user's own handle
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (user?.id) {
+    const ownProfile = await db
+      .select({ handle: profiles.handle })
+      .from(profiles)
+      .where(eq(profiles.id, user.id))
+      .limit(1);
 
-  if (user) {
-    const { data: ownProfile } = await supabase
-      .from("profiles")
-      .select("handle")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (ownProfile?.handle === handle) {
+    if (ownProfile[0]?.handle === handle) {
       return NextResponse.json(
         { code: "CANNOT_ADD_SELF" },
         { status: 400 },
@@ -35,18 +34,13 @@ export async function GET(request: NextRequest) {
   }
 
   // Look up the target profile
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name")
-    .eq("handle", handle)
-    .maybeSingle();
+  const profileRows = await db
+    .select({ id: profiles.id, handle: profiles.handle, display_name: profiles.display_name })
+    .from(profiles)
+    .where(eq(profiles.handle, handle))
+    .limit(1);
 
-  if (error) {
-    return NextResponse.json(
-      { code: "SERVER_ERROR" },
-      { status: 500 },
-    );
-  }
+  const profile = profileRows[0];
 
   if (!profile) {
     return NextResponse.json(
@@ -56,14 +50,18 @@ export async function GET(request: NextRequest) {
   }
 
   // Check if already following (informational)
-  if (user) {
-    const { count } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_user_id", user.id)
-      .eq("following_user_id", profile.id);
+  if (user?.id) {
+    const followRows = await db
+      .select({ count: count() })
+      .from(follows)
+      .where(
+        and(
+          eq(follows.follower_user_id, user.id),
+          eq(follows.following_user_id, profile.id),
+        ),
+      );
 
-    if (count && count > 0) {
+    if (followRows[0]?.count && followRows[0].count > 0) {
       return NextResponse.json(
         { code: "ALREADY_FOLLOWING", handle: profile.handle },
         { status: 200 },

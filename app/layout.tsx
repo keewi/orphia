@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import Link from "next/link";
 import Navigation from "./Navigation";
+import Providers from "./providers";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`} style={{ backgroundColor: "#0F0E12" }}>
       <body style={{ backgroundColor: "#0F0E12" }}>
+        <Providers>
         <NextTopLoader
           color="#F4C542"
           height={2}
@@ -65,6 +67,7 @@ export default function RootLayout({
         <main className="main-content">
           {children}
         </main>
+        </Providers>
       </body>
     </html>
   );

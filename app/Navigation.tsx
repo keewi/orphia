@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
   { label: "Explore", href: "/" },
@@ -16,31 +16,23 @@ const navItems = [
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userHandle, setUserHandle] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user email and handle on mount
+  const userEmail = session?.user?.email ?? null;
+
+  // Fetch user handle on mount
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user;
-      setUserEmail(user?.email ?? null);
-      if (user) {
-        supabase
-          .from("profiles")
-          .select("handle")
-          .eq("id", user.id)
-          .maybeSingle()
-          .then(({ data: profile }) => {
-            setUserHandle(profile?.handle ?? null);
-          });
-      }
-    });
-  }, []);
+    if (!session?.user?.id) return;
+    fetch(`/api/me`)
+      .then((res) => res.json())
+      .then((data) => setUserHandle(data.handle ?? null))
+      .catch(() => {});
+  }, [session?.user?.id]);
 
   // Close account menu on click outside
   useEffect(() => {
@@ -78,9 +70,8 @@ export default function Navigation() {
   }, [pathname]);
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
     document.cookie = "x-has-handle=; path=/; max-age=0";
+    await signOut({ redirect: false });
     router.push("/login");
     router.refresh();
   }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { claimHandle, checkHandleAvailability } from "@/app/actions";
 
 export default function ChooseHandlePage() {
   const [handle, setHandle] = useState("");
@@ -40,14 +40,8 @@ export default function ChooseHandlePage() {
       setAvailable(false);
 
       debounceRef.current = setTimeout(async () => {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("profiles")
-          .select("handle")
-          .eq("handle", value)
-          .maybeSingle();
-
-        if (data) {
+        const result = await checkHandleAvailability(value);
+        if (result.taken) {
           setError("Handle already taken");
           setAvailable(false);
         } else {
@@ -78,27 +72,9 @@ export default function ChooseHandlePage() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Not authenticated");
-      setLoading(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from("profiles")
-      .insert({ id: user.id, handle });
-
-    if (insertError) {
-      if (insertError.message.includes("duplicate") || insertError.message.includes("unique")) {
-        setError("Handle already taken");
-      } else {
-        setError(insertError.message);
-      }
+    const result = await claimHandle(handle);
+    if (!result.ok) {
+      setError(result.error ?? "Failed to claim handle");
       setLoading(false);
       return;
     }
