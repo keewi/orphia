@@ -38,6 +38,7 @@ export default async function ShowdlePage() {
         wordLength: puzzle.answer.length,
         difficulty: puzzle.difficulty,
         answer: puzzle.answer,
+        showName: puzzle.showName,
       }}
     />
   );

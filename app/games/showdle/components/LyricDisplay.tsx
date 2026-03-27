@@ -3,9 +3,10 @@
 interface LyricDisplayProps {
   lyric: string;
   wordLength: number;
+  hintShowName?: string | null;
 }
 
-export default function LyricDisplay({ lyric, wordLength }: LyricDisplayProps) {
+export default function LyricDisplay({ lyric, wordLength, hintShowName }: LyricDisplayProps) {
   // Replace [BLANK] with N underscore spans where N = wordLength
   const parts = lyric.split("[BLANK]");
 
@@ -22,6 +23,9 @@ export default function LyricDisplay({ lyric, wordLength }: LyricDisplayProps) {
         {blanks}
         {parts[1]}&rdquo;
       </p>
+      {hintShowName && (
+        <p className="sd-lyric-hint">💡 From: {hintShowName}</p>
+      )}
     </div>
   );
 }

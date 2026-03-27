@@ -21,7 +21,8 @@ interface GameState {
   evaluations: TileState[][];
   currentGuess: string;
   status: "playing" | "won" | "lost";
-  hintUsed: boolean; // Slice 2 placeholder — always false
+  hintUsed: boolean;
+  hintShowName: string | null;
 }
 
 function storageKey(puzzleId: string) {
@@ -48,6 +49,23 @@ function saveState(state: GameState) {
   }
 }
 
+function postCompletion(puzzleId: string, state: GameState) {
+  try {
+    fetch(`/api/showdle/puzzle/${puzzleId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guesses: state.guesses.filter((g) => g !== "HINT"),
+        won: state.status === "won",
+        guessCount: state.guesses.length,
+        hintUsed: state.hintUsed,
+      }),
+    }).catch(() => {});
+  } catch {
+    // Fire-and-forget — swallow all errors
+  }
+}
+
 export function useGameState(puzzleId: string, wordLength: number, answer: string | null) {
   const [state, setState] = useState<GameState>(() => {
     const saved = loadState(puzzleId);
@@ -59,7 +77,8 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
       evaluations: [],
       currentGuess: "",
       status: "playing",
-      hintUsed: false, // TODO: Slice 2 — hint logic
+      hintUsed: false,
+      hintShowName: null,
     };
   });
 
@@ -76,21 +95,7 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
   useEffect(() => {
     if (state.status === "playing" || completedRef.current) return;
     completedRef.current = true;
-
-    try {
-      fetch(`/api/showdle/puzzle/${state.puzzleId}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          guesses: state.guesses,
-          won: state.status === "won",
-          guessCount: state.guesses.length,
-          hintUsed: state.hintUsed,
-        }),
-      }).catch(() => {});
-    } catch {
-      // Swallow errors
-    }
+    postCompletion(state.puzzleId, state);
   }, [state.status, state.puzzleId, state.guesses, state.hintUsed]);
 
   const addLetter = useCallback((letter: string) => {
@@ -117,9 +122,6 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
         return prev;
       }
 
-      // answer might not be loaded yet for evaluation — but we have it from reveal
-      // Actually, we do NOT have the answer client-side during play.
-      // We evaluate using the evaluateGuess function with the answer passed in.
       if (!answer) return prev;
 
       const guess = prev.currentGuess.toUpperCase();
@@ -150,9 +152,44 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
     });
   }, [answer]);
 
-  // Derive keyboard letter states from all evaluations
+  const activateHint = useCallback((showName: string) => {
+    setState((prev) => {
+      if (prev.hintUsed) return prev;
+      if (prev.status !== "playing") return prev;
+      // Disable hint if 5 or more real guesses already submitted
+      if (prev.guesses.filter((g) => g !== "HINT").length >= 5) return prev;
+
+      const hintEvaluation: TileState[] = new Array(prev.wordLength).fill("hint");
+      const newGuesses = [...prev.guesses, "HINT"];
+      const newEvaluations = [...prev.evaluations, hintEvaluation];
+
+      // If hint pushes to 6 total guesses, game is lost
+      const isLoss = newGuesses.length >= MAX_GUESSES;
+      const newStatus: GameState["status"] = isLoss ? "lost" : "playing";
+
+      const newState: GameState = {
+        ...prev,
+        guesses: newGuesses,
+        evaluations: newEvaluations,
+        hintUsed: true,
+        hintShowName: showName,
+        status: newStatus,
+      };
+
+      // If hint caused a loss, post completion
+      if (isLoss) {
+        postCompletion(prev.puzzleId, newState);
+        completedRef.current = true;
+      }
+
+      return newState;
+    });
+  }, []);
+
+  // Derive keyboard letter states from all evaluations (skip hint rows)
   const letterStates: Record<string, TileState> = {};
   for (let i = 0; i < state.guesses.length; i++) {
+    if (state.guesses[i] === "HINT") continue;
     const guess = state.guesses[i];
     const evaluation = state.evaluations[i];
     for (let j = 0; j < guess.length; j++) {
@@ -175,5 +212,6 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
     addLetter,
     deleteLetter,
     submitGuess,
+    activateHint,
   };
 }

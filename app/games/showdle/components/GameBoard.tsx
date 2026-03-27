@@ -8,7 +8,7 @@ interface GameBoardProps {
   guesses: string[];
   evaluations: TileState[][];
   currentGuess: string;
-  latestGuessIndex: number | null; // index of the most recently submitted guess (for flip animation)
+  latestGuessIndex: number | null;
 }
 
 const MAX_GUESSES = 6;
@@ -23,43 +23,57 @@ export default function GameBoard({
   const rows: React.ReactNode[] = [];
 
   for (let row = 0; row < MAX_GUESSES; row++) {
-    const tiles: React.ReactNode[] = [];
-
     if (row < guesses.length) {
-      // Submitted guess row
-      const guess = guesses[row];
-      const evaluation = evaluations[row];
-      const isLatest = row === latestGuessIndex;
-      for (let col = 0; col < wordLength; col++) {
-        tiles.push(
-          <Tile
-            key={col}
-            letter={guess[col] || ""}
-            state={evaluation?.[col]}
-            shouldFlip={isLatest}
-            flipDelay={col * 80}
-          />,
+      const isHintRow = guesses[row] === "HINT";
+
+      if (isHintRow) {
+        // Render hint row with overlay label
+        rows.push(
+          <div className="sd-board-row sd-board-row--hint" key={row}>
+            {Array.from({ length: wordLength }).map((_, col) => (
+              <div className="sd-tile sd-tile--hint" key={col} />
+            ))}
+            <span className="sd-hint-row-label">💡 hint</span>
+          </div>,
+        );
+      } else {
+        // Normal submitted guess row
+        const guess = guesses[row];
+        const evaluation = evaluations[row];
+        const isLatest = row === latestGuessIndex;
+        rows.push(
+          <div className="sd-board-row" key={row}>
+            {Array.from({ length: wordLength }).map((_, col) => (
+              <Tile
+                key={col}
+                letter={guess[col] || ""}
+                state={evaluation?.[col]}
+                shouldFlip={isLatest}
+                flipDelay={col * 80}
+              />
+            ))}
+          </div>,
         );
       }
     } else if (row === guesses.length) {
       // Active input row
-      for (let col = 0; col < wordLength; col++) {
-        tiles.push(
-          <Tile key={col} letter={currentGuess[col] || ""} />,
-        );
-      }
+      rows.push(
+        <div className="sd-board-row" key={row}>
+          {Array.from({ length: wordLength }).map((_, col) => (
+            <Tile key={col} letter={currentGuess[col] || ""} />
+          ))}
+        </div>,
+      );
     } else {
       // Empty future row
-      for (let col = 0; col < wordLength; col++) {
-        tiles.push(<Tile key={col} letter="" />);
-      }
+      rows.push(
+        <div className="sd-board-row" key={row}>
+          {Array.from({ length: wordLength }).map((_, col) => (
+            <Tile key={col} letter="" />
+          ))}
+        </div>,
+      );
     }
-
-    rows.push(
-      <div className="sd-board-row" key={row}>
-        {tiles}
-      </div>,
-    );
   }
 
   return <div className="sd-board">{rows}</div>;

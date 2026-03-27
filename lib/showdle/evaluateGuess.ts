@@ -1,4 +1,4 @@
-export type TileState = "correct" | "present" | "absent";
+export type TileState = "correct" | "present" | "absent" | "hint";
 
 /**
  * Evaluate a guess against the answer using two-pass Wordle algorithm.

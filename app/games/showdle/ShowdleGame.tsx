@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ShowdleHeader from "./components/ShowdleHeader";
 import LyricDisplay from "./components/LyricDisplay";
 import GameBoard from "./components/GameBoard";
 import Keyboard from "./components/Keyboard";
 import Toast from "./components/Toast";
 import RevealModal from "./components/RevealModal";
+import HintButton from "./components/HintButton";
+import HintConfirmModal from "./components/HintConfirmModal";
 import { useGameState } from "./hooks/useGameState";
 
 interface ShowdleGameProps {
@@ -16,6 +18,7 @@ interface ShowdleGameProps {
     wordLength: number;
     difficulty: number;
     answer: string;
+    showName: string;
   };
 }
 
@@ -25,6 +28,8 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
     evaluations,
     currentGuess,
     status,
+    hintUsed,
+    hintShowName,
     latestGuessIndex,
     letterStates,
     toast,
@@ -32,7 +37,10 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
     addLetter,
     deleteLetter,
     submitGuess,
+    activateHint,
   } = useGameState(puzzle.id, puzzle.wordLength, puzzle.answer);
+
+  const [showHintModal, setShowHintModal] = useState(false);
 
   // Physical keyboard handler
   const handleKeyDown = useCallback(
@@ -56,12 +64,33 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // Hint disabled when: already used, game over, or 5+ real guesses submitted
+  const realGuessCount = guesses.filter((g) => g !== "HINT").length;
+  const hintDisabled = hintUsed || status !== "playing" || realGuessCount >= 5;
+
+  const handleHintConfirm = () => {
+    setShowHintModal(false);
+    activateHint(puzzle.showName);
+  };
+
   const showModal = status !== "playing";
 
   return (
     <>
       <ShowdleHeader />
-      <LyricDisplay lyric={puzzle.lyric} wordLength={puzzle.wordLength} />
+      <LyricDisplay
+        lyric={puzzle.lyric}
+        wordLength={puzzle.wordLength}
+        hintShowName={hintShowName}
+      />
+      {status === "playing" && (
+        <HintButton
+          disabled={hintDisabled}
+          used={hintUsed}
+          showName={hintShowName}
+          onHint={() => setShowHintModal(true)}
+        />
+      )}
       <GameBoard
         wordLength={puzzle.wordLength}
         guesses={guesses}
@@ -77,6 +106,13 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
       />
 
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
+
+      {showHintModal && (
+        <HintConfirmModal
+          onCancel={() => setShowHintModal(false)}
+          onConfirm={handleHintConfirm}
+        />
+      )}
 
       {showModal && (
         <RevealModal
