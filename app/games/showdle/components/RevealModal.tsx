@@ -30,8 +30,8 @@ export default function RevealModal({ puzzleId, won, guessCount }: RevealModalPr
   if (!data) return null;
 
   const resultText = won
-    ? `Correct! ${guessCount}/6`
-    : `Nice try! X/6`;
+    ? `Correct! ${guessCount} ${guessCount === 1 ? "guess" : "guesses"}`
+    : `Nice try!`;
 
   const castLine = data.originalCast
     ? `${data.characterName} \u2022 ${data.originalCast}`

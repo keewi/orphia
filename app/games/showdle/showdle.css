@@ -19,8 +19,8 @@
   --sd-gold-muted: #a08060;
 
   /* ── Color: Game State ── */
-  --sd-correct: #1a1108;       /* Ink-black — intentional, on-brand */
-  --sd-correct-text: #faf5ee;  /* Cream on correct tile */
+  --sd-correct: #2d6a2d;       /* Green — matches sd-success */
+  --sd-correct-text: #eaf3e0;  /* Light green — matches sd-success-bg */
   --sd-present: #c8922a;       /* Gold */
   --sd-present-text: #ffffff;
   --sd-absent: #e8e0d4;
@@ -493,6 +493,9 @@
   padding: var(--space-2);
   cursor: pointer;
   transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sd-playbill-tap--disabled {
