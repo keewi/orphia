@@ -14,8 +14,8 @@ export default function LyricDisplay({
   lyric,
   wordLength,
   hintShowName,
-  onHintTap,
-  hintDisabled,
+  // onHintTap,     // hint icon commented out
+  // hintDisabled,  // hint icon commented out
 }: LyricDisplayProps) {
   const parts = lyric.split("[BLANK]");
   const blanks = Array.from({ length: wordLength }).map((_, i) => (

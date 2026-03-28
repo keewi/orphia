@@ -37,7 +37,7 @@ export default function RevealModal({
   guessCount,
   evaluations,
   wordLength,
-  hintUsed,
+  // hintUsed,  // reserved for share text
 }: RevealModalProps) {
   const [data, setData] = useState<RevealData | null>(null);
 
