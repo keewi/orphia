@@ -7,7 +7,6 @@ import GameBoard from "./components/GameBoard";
 import Keyboard from "./components/Keyboard";
 import Toast from "./components/Toast";
 import RevealModal from "./components/RevealModal";
-import HintButton from "./components/HintButton";
 import HintConfirmModal from "./components/HintConfirmModal";
 import { useGameState } from "./hooks/useGameState";
 
@@ -82,15 +81,9 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
         lyric={puzzle.lyric}
         wordLength={puzzle.wordLength}
         hintShowName={hintShowName}
+        onHintTap={() => setShowHintModal(true)}
+        hintDisabled={hintDisabled}
       />
-      {status === "playing" && (
-        <HintButton
-          disabled={hintDisabled}
-          used={hintUsed}
-          showName={hintShowName}
-          onHint={() => setShowHintModal(true)}
-        />
-      )}
       <GameBoard
         wordLength={puzzle.wordLength}
         guesses={guesses}

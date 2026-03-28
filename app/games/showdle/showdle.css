@@ -32,8 +32,7 @@
   --sd-success-bg: #eaf3e0;
   --sd-error: #b03a2e;
   --sd-error-bg: #fbeae8;
-  --sd-hint: #5a7fb5;
-  --sd-hint-bg: #eef2fa;
+  /* hint tokens removed — hint uses gold/parchment + success colors */
 
   /* ── Color: Difficulty Badges ── */
   --sd-diff-easy: #2d6a2d;
@@ -136,9 +135,8 @@
   background: var(--sd-surface);
   border: var(--border-light);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
   margin: var(--space-4);
-  text-align: center;
+  overflow: hidden;
 }
 
 .sd-lyric-text {
@@ -468,86 +466,55 @@
   background: var(--sd-parchment);
 }
 
-/* ── Hint button ─────────────────────────────────────── */
-.sd-hint-btn-wrapper {
-  text-align: center;
-  margin: var(--space-4) 0 0;
-}
-
-.sd-hint-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: transparent;
-  border: 1px solid var(--sd-hint);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sd-hint);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.sd-hint-btn-icon {
-  font-size: 13px;
-}
-
-.sd-hint-btn:hover {
-  background: var(--sd-hint-bg);
-}
-
-.sd-hint-btn--disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.sd-hint-used-label {
-  text-align: center;
-  margin: var(--space-4) 0 0;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--sd-hint);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
 /* ── Hint row in board ───────────────────────────────── */
-.sd-board-row--hint {
-  position: relative;
-}
-
 .sd-tile--hint {
-  background: var(--sd-hint-bg);
-  border: 1px solid var(--sd-hint);
+  background: var(--sd-absent);
+  border-color: var(--sd-absent-border);
 }
 
-.sd-hint-row-label {
-  position: absolute;
-  inset: 0;
+/* ── Playbill icon in lyric card ─────────────────────── */
+.sd-lyric-box-inner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--sd-hint);
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  gap: 10px;
+  padding: var(--space-3) 14px 10px;
+}
+
+.sd-lyric-box-inner--revealed {
+  display: block;
+}
+
+.sd-lyric-box-inner--revealed .sd-lyric-text {
+  padding: var(--space-3) 14px var(--space-2);
+}
+
+.sd-playbill-tap {
+  flex-shrink: 0;
+  padding: var(--space-2);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.sd-playbill-tap--disabled {
+  opacity: 0.35;
+  cursor: default;
   pointer-events: none;
 }
 
-/* ── Hint in lyric box ───────────────────────────────── */
-.sd-lyric-hint {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sd-hint);
-  margin: var(--space-2) 0 0;
+.sd-lyric-reveal-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-2) 14px 10px;
+  border-top: 0.5px solid var(--sd-border-light);
   animation: sd-fade-in 0.3s ease;
+}
+
+.sd-lyric-reveal-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--sd-ink);
 }
 
 @keyframes sd-fade-in {
@@ -559,7 +526,7 @@
 .sd-hint-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(26, 17, 8, 0.55);
+  background: rgba(26, 17, 8, 0.45);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -572,7 +539,7 @@
   border: var(--border-light);
   border-radius: var(--radius-xl);
   padding: var(--space-6) var(--space-5);
-  max-width: 340px;
+  max-width: 280px;
   width: 100%;
   text-align: center;
   animation: sd-hint-modal-enter 0.2s ease;

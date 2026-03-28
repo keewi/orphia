@@ -15,17 +15,17 @@ export default auth(async (req) => {
   const isPublicRoute =
     pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname.startsWith("/games/showdle") || pathname.startsWith("/api/showdle");
 
-  // Unauthenticated user on a protected route -> redirect to /login
+  // Unauthenticated user on a protected route -> redirect to Showdle
   if (!user && !isPublicRoute) {
     const url = req.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/games/showdle";
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on /login -> redirect to home
-  if (user && pathname.startsWith("/login")) {
+  // /login -> redirect to Showdle
+  if (pathname.startsWith("/login")) {
     const url = req.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/games/showdle";
     return NextResponse.redirect(url);
   }
 

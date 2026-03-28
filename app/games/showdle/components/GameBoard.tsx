@@ -29,13 +29,12 @@ export default function GameBoard({
       const isHintRow = guesses[row] === "HINT";
 
       if (isHintRow) {
-        // Render hint row with overlay label
+        // Render hint row — plain grey tiles, no text, no label
         rows.push(
-          <div className="sd-board-row sd-board-row--hint" key={row}>
+          <div className="sd-board-row" key={row}>
             {Array.from({ length: wordLength }).map((_, col) => (
               <div className="sd-tile sd-tile--hint" key={col} />
             ))}
-            <span className="sd-hint-row-label">💡 hint</span>
           </div>,
         );
       } else {
