@@ -161,8 +161,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 0 var(--space-4) var(--space-4);
+  flex: 1;
 }
 
 .sd-board-row {
@@ -253,7 +255,7 @@
   background: var(--sd-cream);
   position: sticky;
   bottom: 0;
-  margin-top: auto;
+  z-index: 10;
 }
 
 .sd-keyboard-row {
@@ -264,9 +266,10 @@
 }
 
 .sd-key {
-  height: 32px;
-  min-width: 26px;
-  padding: 0 6px;
+  height: 42px;
+  min-width: 30px;
+  flex: 1;
+  padding: 0 2px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -275,7 +278,7 @@
   background: var(--sd-surface);
   color: var(--sd-ink);
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.1s;
@@ -292,8 +295,9 @@
 }
 
 .sd-key--wide {
+  flex: 1.5;
   min-width: 38px;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .sd-key--correct {
@@ -618,6 +622,7 @@
   .sd-key {
     height: 40px;
     min-width: 36px;
+    flex: 0 0 auto;
     font-size: 13px;
   }
 
