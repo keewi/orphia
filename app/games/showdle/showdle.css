@@ -1,35 +1,75 @@
 /* ── Showdle: Isolated design system ─────────────────────
    All classes prefixed with sd- to avoid host app collisions.
-   This file is imported ONLY by the Showdle layout. */
+   This file is imported ONLY by the Showdle layout.
+   Source of truth: Showdle_Design_System.md v1.0 */
 
-/* ── Tokens ──────────────────────────────────────────── */
-:root {
+/* ── Design System Tokens ───────────────────────────────── */
+.sd-root {
+  /* ── Color: Base ── */
   --sd-ink: #1a1108;
   --sd-cream: #faf5ee;
   --sd-surface: #ffffff;
   --sd-parchment: #f0e8d8;
   --sd-border: #d4c9b8;
   --sd-border-light: #e0d5c4;
+
+  /* ── Color: Brand / Accent ── */
   --sd-gold: #c8922a;
   --sd-gold-light: #f0c060;
   --sd-gold-muted: #a08060;
+
+  /* ── Color: Game State ── */
+  --sd-correct: #1a1108;       /* Ink-black — intentional, on-brand */
+  --sd-correct-text: #faf5ee;  /* Cream on correct tile */
+  --sd-present: #c8922a;       /* Gold */
+  --sd-present-text: #ffffff;
   --sd-absent: #e8e0d4;
   --sd-absent-text: #908070;
   --sd-absent-border: #ccc4b4;
-  --sd-correct: #2d6a2d;
-  --sd-correct-light: #4a9a4a;
+
+  /* ── Color: Semantic ── */
   --sd-success: #2d6a2d;
   --sd-success-bg: #eaf3e0;
   --sd-error: #b03a2e;
   --sd-error-bg: #fbeae8;
   --sd-hint: #5a7fb5;
   --sd-hint-bg: #eef2fa;
+
+  /* ── Color: Difficulty Badges ── */
   --sd-diff-easy: #2d6a2d;
   --sd-diff-easy-bg: #eaf3e0;
   --sd-diff-medium: #a07010;
   --sd-diff-medium-bg: #fdf3d8;
   --sd-diff-hard: #b03a2e;
   --sd-diff-hard-bg: #fbeae8;
+
+  /* ── Typography ── */
+  --font-display: var(--font-sd-display, 'Playfair Display'), Georgia, serif;
+  --font-ui: var(--font-sd-ui, 'DM Sans'), system-ui, sans-serif;
+
+  /* ── Spacing (base unit: 4px) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 14px;
+  --radius-full: 9999px;
+
+  /* ── Borders ── */
+  --border-default: 1px solid var(--sd-border);
+  --border-light: 1px solid var(--sd-border-light);
+  --border-tile: 1.5px solid var(--sd-border);
+  --border-tile-active: 1.5px solid var(--sd-ink);
 }
 
 /* ── Host app isolation ──────────────────────────────── */
@@ -42,7 +82,7 @@
 .sd-root {
   background: var(--sd-cream);
   min-height: 100dvh;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   color: var(--sd-ink);
   -webkit-font-smoothing: antialiased;
 }
@@ -64,7 +104,7 @@
 }
 
 .sd-header-logo {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: var(--sd-cream);
@@ -75,7 +115,7 @@
 }
 
 .sd-header-subline {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 9px;
   font-weight: 500;
   color: var(--sd-gold);
@@ -85,23 +125,24 @@
 }
 
 .sd-header-date {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 10px;
   color: var(--sd-gold-muted);
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 /* ── Lyric Box ───────────────────────────────────────── */
 .sd-lyric-box {
   background: var(--sd-surface);
-  border: 1px solid var(--sd-border-light);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px;
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin: var(--space-4);
+  text-align: center;
 }
 
 .sd-lyric-text {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display);
   font-style: italic;
   font-size: 14px;
   color: var(--sd-ink);
@@ -113,6 +154,7 @@
   display: inline-block;
   min-width: 16px;
   border-bottom: 2px solid var(--sd-ink);
+  border-radius: 0;
   margin: 0 2px;
 }
 
@@ -121,8 +163,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 0 16px 16px;
+  gap: 5px;
+  padding: 0 var(--space-4) var(--space-4);
 }
 
 .sd-board-row {
@@ -132,15 +174,16 @@
 
 /* ── Tile ────────────────────────────────────────────── */
 .sd-tile {
-  width: 40px;
-  height: 40px;
+  /* Default: word length 5, mobile */
+  width: var(--sd-tile-size, 40px);
+  height: var(--sd-tile-size, 40px);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  border: 1.5px solid var(--sd-border);
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  border: var(--border-tile);
+  font-family: var(--font-ui);
+  font-size: var(--sd-tile-font, 15px);
   font-weight: 500;
   text-transform: uppercase;
   background: var(--sd-surface);
@@ -150,19 +193,19 @@
 }
 
 .sd-tile--filled {
-  border-color: var(--sd-ink);
+  border: var(--border-tile-active);
 }
 
 .sd-tile--correct {
   background: var(--sd-correct);
   border-color: var(--sd-correct);
-  color: white;
+  color: var(--sd-correct-text);
 }
 
 .sd-tile--present {
-  background: var(--sd-gold);
-  border-color: var(--sd-gold);
-  color: white;
+  background: var(--sd-present);
+  border-color: var(--sd-present);
+  color: var(--sd-present-text);
 }
 
 .sd-tile--absent {
@@ -171,7 +214,15 @@
   color: var(--sd-absent-text);
 }
 
-/* Flip animation */
+/* ── Word-length tile scaling (mobile) ──────────────── */
+.sd-board[data-word-length="4"] { --sd-tile-size: 44px; --sd-tile-font: 17px; }
+.sd-board[data-word-length="5"] { --sd-tile-size: 40px; --sd-tile-font: 15px; }
+.sd-board[data-word-length="6"] { --sd-tile-size: 34px; --sd-tile-font: 13px; }
+.sd-board[data-word-length="7"] { --sd-tile-size: 30px; --sd-tile-font: 12px; }
+.sd-board[data-word-length="8"] { --sd-tile-size: 24px; --sd-tile-font: 11px; }
+.sd-board[data-word-length="9"] { --sd-tile-size: 22px; --sd-tile-font: 10px; }
+
+/* ── Tile animations ────────────────────────────────── */
 @keyframes sd-tile-flip {
   0%   { transform: rotateX(0deg); }
   50%  { transform: rotateX(-90deg); }
@@ -182,10 +233,19 @@
   animation: sd-tile-flip 0.4s ease;
 }
 
+@keyframes sd-tile-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-12px); }
+}
+
+.sd-tile--bounce {
+  animation: sd-tile-bounce 0.5s ease;
+}
+
 /* ── Keyboard ────────────────────────────────────────── */
 .sd-keyboard {
-  padding: 8px 6px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: var(--space-2) 6px;
+  padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
   background: var(--sd-cream);
   position: sticky;
   bottom: 0;
@@ -195,8 +255,8 @@
 .sd-keyboard-row {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
 }
 
 .sd-key {
@@ -206,11 +266,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  border: 1px solid var(--sd-border);
+  border-radius: var(--radius-md);
+  border: var(--border-default);
   background: var(--sd-surface);
   color: var(--sd-ink);
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 500;
   cursor: pointer;
@@ -235,13 +295,13 @@
 .sd-key--correct {
   background: var(--sd-correct);
   border-color: var(--sd-correct);
-  color: white;
+  color: var(--sd-correct-text);
 }
 
 .sd-key--present {
-  background: var(--sd-gold);
-  border-color: var(--sd-gold);
-  color: white;
+  background: var(--sd-present);
+  border-color: var(--sd-present);
+  color: var(--sd-present-text);
 }
 
 .sd-key--absent {
@@ -258,9 +318,9 @@
   transform: translateX(-50%);
   background: var(--sd-ink);
   color: var(--sd-cream);
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 500;
   z-index: 50;
@@ -292,14 +352,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .sd-modal-panel {
   background: var(--sd-cream);
-  border-radius: 14px;
-  padding: 24px;
-  max-width: 320px;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  max-width: 340px;
   width: 100%;
   text-align: center;
   animation: sd-modal-enter 0.25s ease;
@@ -311,38 +371,38 @@
 }
 
 .sd-modal-result {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 16px;
   font-weight: 500;
   color: var(--sd-ink);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .sd-modal-show {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   color: var(--sd-ink);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
 }
 
 .sd-modal-detail {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 13px;
   color: var(--sd-gold-muted);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .sd-modal-badge {
   display: inline-block;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 3px 10px;
-  border-radius: 4px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
 }
 
 .sd-badge--easy {
@@ -363,13 +423,14 @@
 /* ── Buttons ─────────────────────────────────────────── */
 .sd-btn {
   width: 100%;
-  padding: 11px 16px;
-  border-radius: 6px;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 500;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: opacity 0.1s;
+  transition: opacity 0.15s;
   border: none;
 }
 
@@ -379,17 +440,22 @@
 
 .sd-btn--primary {
   background: var(--sd-gold);
-  color: white;
+  color: #ffffff;
 }
 
 .sd-btn--primary:hover {
   opacity: 0.88;
 }
 
+.sd-btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .sd-btn--secondary {
   background: transparent;
   color: var(--sd-ink);
-  border: 1px solid var(--sd-border);
+  border: var(--border-default);
 }
 
 .sd-btn--secondary:hover {
@@ -403,9 +469,9 @@
   gap: 6px;
   background: transparent;
   border: 1px solid var(--sd-hint);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 7px 14px;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
   color: var(--sd-hint);
@@ -425,8 +491,8 @@
 
 .sd-hint-used-label {
   text-align: center;
-  margin: 16px 0 0;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 500;
   color: var(--sd-hint);
@@ -450,7 +516,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 500;
   color: var(--sd-hint);
@@ -461,11 +527,11 @@
 
 /* ── Hint in lyric box ───────────────────────────────── */
 .sd-lyric-hint {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
   color: var(--sd-hint);
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   animation: sd-fade-in 0.3s ease;
 }
 
@@ -483,14 +549,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .sd-hint-modal-panel {
   background: var(--sd-surface);
-  border: 1px solid var(--sd-border-light);
-  border-radius: 14px;
-  padding: 24px 20px;
+  border: var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-5);
   max-width: 280px;
   width: 100%;
   text-align: center;
@@ -503,30 +569,45 @@
 }
 
 .sd-hint-modal-heading {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 500;
   color: var(--sd-ink);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
 }
 
 .sd-hint-modal-body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 400;
   color: var(--sd-gold-muted);
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-5);
 }
 
 .sd-hint-modal-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
+}
+
+/* ── Streak Badge ────────────────────────────────────── */
+.sd-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: #fff8ee;
+  border: 1px solid var(--sd-gold-light);
+  border-radius: var(--radius-xl);
+  padding: 4px var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sd-gold);
 }
 
 /* ── Loading skeleton ────────────────────────────────── */
 .sd-skeleton {
   background: var(--sd-border-light);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   animation: sd-pulse 1.5s ease-in-out infinite;
 }
 
@@ -541,10 +622,18 @@
   .sd-lyric-text { font-size: 15px; }
 
   .sd-tile {
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
+    width: var(--sd-tile-size-d, 48px);
+    height: var(--sd-tile-size-d, 48px);
+    font-size: var(--sd-tile-font-d, 18px);
   }
+
+  /* Word-length tile scaling (desktop) */
+  .sd-board[data-word-length="4"] { --sd-tile-size-d: 52px; --sd-tile-font-d: 20px; }
+  .sd-board[data-word-length="5"] { --sd-tile-size-d: 48px; --sd-tile-font-d: 18px; }
+  .sd-board[data-word-length="6"] { --sd-tile-size-d: 42px; --sd-tile-font-d: 16px; }
+  .sd-board[data-word-length="7"] { --sd-tile-size-d: 36px; --sd-tile-font-d: 14px; }
+  .sd-board[data-word-length="8"] { --sd-tile-size-d: 30px; --sd-tile-font-d: 13px; }
+  .sd-board[data-word-length="9"] { --sd-tile-size-d: 26px; --sd-tile-font-d: 12px; }
 
   .sd-key {
     height: 40px;
@@ -559,6 +648,6 @@
 
   .sd-keyboard {
     position: static;
-    padding-bottom: 16px;
+    padding-bottom: var(--space-4);
   }
 }

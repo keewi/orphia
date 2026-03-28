@@ -97,6 +97,7 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
         evaluations={evaluations}
         currentGuess={currentGuess}
         latestGuessIndex={latestGuessIndex}
+        status={status}
       />
       <Keyboard
         onKey={addLetter}

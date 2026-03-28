@@ -9,6 +9,7 @@ interface GameBoardProps {
   evaluations: TileState[][];
   currentGuess: string;
   latestGuessIndex: number | null;
+  status?: "playing" | "won" | "lost";
 }
 
 const MAX_GUESSES = 6;
@@ -19,6 +20,7 @@ export default function GameBoard({
   evaluations,
   currentGuess,
   latestGuessIndex,
+  status = "playing",
 }: GameBoardProps) {
   const rows: React.ReactNode[] = [];
 
@@ -41,6 +43,7 @@ export default function GameBoard({
         const guess = guesses[row];
         const evaluation = evaluations[row];
         const isLatest = row === latestGuessIndex;
+        const isWinRow = status === "won" && evaluation?.every((s) => s === "correct");
         rows.push(
           <div className="sd-board-row" key={row}>
             {Array.from({ length: wordLength }).map((_, col) => (
@@ -50,6 +53,8 @@ export default function GameBoard({
                 state={evaluation?.[col]}
                 shouldFlip={isLatest}
                 flipDelay={col * 80}
+                shouldBounce={isWinRow && isLatest}
+                bounceDelay={col * 100}
               />
             ))}
           </div>,
@@ -76,5 +81,5 @@ export default function GameBoard({
     }
   }
 
-  return <div className="sd-board">{rows}</div>;
+  return <div className="sd-board" data-word-length={wordLength}>{rows}</div>;
 }
