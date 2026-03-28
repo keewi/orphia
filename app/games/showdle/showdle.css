@@ -170,26 +170,29 @@
 .sd-board-row {
   display: flex;
   gap: 5px;
+  justify-content: center;
 }
 
 /* ── Tile ────────────────────────────────────────────── */
+/* Default: square, 10% taller than keyboard keys (mobile 32→35, desktop 40→44).
+   Shrinks only when row would exceed lyric card width. */
 .sd-tile {
-  /* Default: word length 5, mobile */
-  width: var(--sd-tile-size, 40px);
-  height: var(--sd-tile-size, 40px);
+  width: min(var(--sd-tile-default, 35px), var(--sd-tile-max, 100px));
+  height: min(var(--sd-tile-default, 35px), var(--sd-tile-max, 100px));
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
   border: var(--border-tile);
   font-family: var(--font-ui);
-  font-size: var(--sd-tile-font, 15px);
+  font-size: 15px;
   font-weight: 500;
   text-transform: uppercase;
   background: var(--sd-surface);
   color: var(--sd-ink);
   transition: background 0.15s ease, border-color 0.15s ease;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .sd-tile--filled {
@@ -214,13 +217,16 @@
   color: var(--sd-absent-text);
 }
 
-/* ── Word-length tile scaling (mobile) ──────────────── */
-.sd-board[data-word-length="4"] { --sd-tile-size: 44px; --sd-tile-font: 17px; }
-.sd-board[data-word-length="5"] { --sd-tile-size: 40px; --sd-tile-font: 15px; }
-.sd-board[data-word-length="6"] { --sd-tile-size: 34px; --sd-tile-font: 13px; }
-.sd-board[data-word-length="7"] { --sd-tile-size: 30px; --sd-tile-font: 12px; }
-.sd-board[data-word-length="8"] { --sd-tile-size: 24px; --sd-tile-font: 11px; }
-.sd-board[data-word-length="9"] { --sd-tile-size: 22px; --sd-tile-font: 10px; }
+/* ── Word-length tile capping ───────────────────────── */
+/* Tiles are square at default size (key height × 1.1).
+   If a row would overflow the lyric card width, tiles shrink to fit.
+   Available width = min(448px, 100vw - 32px)  (matches lyric card). */
+.sd-board[data-word-length="4"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 3 * 5px) / 4); }
+.sd-board[data-word-length="5"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 4 * 5px) / 5); }
+.sd-board[data-word-length="6"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 5 * 5px) / 6); }
+.sd-board[data-word-length="7"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 6 * 5px) / 7); }
+.sd-board[data-word-length="8"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 7 * 5px) / 8); }
+.sd-board[data-word-length="9"] { --sd-tile-max: calc((min(448px, 100vw - 32px) - 8 * 5px) / 9); }
 
 /* ── Tile animations ────────────────────────────────── */
 @keyframes sd-tile-flip {
@@ -622,18 +628,9 @@
   .sd-lyric-text { font-size: 15px; }
 
   .sd-tile {
-    width: var(--sd-tile-size-d, 48px);
-    height: var(--sd-tile-size-d, 48px);
-    font-size: var(--sd-tile-font-d, 18px);
+    --sd-tile-default: 44px; /* desktop: 40px key × 1.1 */
+    font-size: 18px;
   }
-
-  /* Word-length tile scaling (desktop) */
-  .sd-board[data-word-length="4"] { --sd-tile-size-d: 52px; --sd-tile-font-d: 20px; }
-  .sd-board[data-word-length="5"] { --sd-tile-size-d: 48px; --sd-tile-font-d: 18px; }
-  .sd-board[data-word-length="6"] { --sd-tile-size-d: 42px; --sd-tile-font-d: 16px; }
-  .sd-board[data-word-length="7"] { --sd-tile-size-d: 36px; --sd-tile-font-d: 14px; }
-  .sd-board[data-word-length="8"] { --sd-tile-size-d: 30px; --sd-tile-font-d: 13px; }
-  .sd-board[data-word-length="9"] { --sd-tile-size-d: 26px; --sd-tile-font-d: 12px; }
 
   .sd-key {
     height: 40px;
