@@ -47,11 +47,12 @@ export default function LyricDisplay({
     );
   }
 
-  // Before hint: lyric text left, Playbill icon flush-right
+  // Before hint: lyric text only (hint icon commented out)
   return (
     <div className="sd-lyric-box">
       <div className="sd-lyric-box-inner">
         {lyricContent}
+        {/* Hint icon removed — uncomment to restore
         <div
           className={`sd-playbill-tap ${hintDisabled ? "sd-playbill-tap--disabled" : ""}`}
           onClick={!hintDisabled ? onHintTap : undefined}
@@ -61,6 +62,7 @@ export default function LyricDisplay({
         >
           <img src="/yellow icon.png" alt="Hint" width={22} height={25} style={{ objectFit: "contain" }} />
         </div>
+        */}
       </div>
     </div>
   );

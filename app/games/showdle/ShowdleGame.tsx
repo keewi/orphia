@@ -113,6 +113,9 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
           puzzleId={puzzle.id}
           won={status === "won"}
           guessCount={guesses.length}
+          evaluations={evaluations}
+          wordLength={puzzle.wordLength}
+          hintUsed={hintUsed}
         />
       )}
     </>
