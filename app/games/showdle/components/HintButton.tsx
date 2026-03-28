@@ -17,14 +17,14 @@ export default function HintButton({ disabled, used, showName, onHint }: HintBut
   }
 
   return (
-    <div style={{ textAlign: "center", margin: "16px 0 0" }}>
+    <div className="sd-hint-btn-wrapper">
       <button
         className={`sd-hint-btn ${disabled ? "sd-hint-btn--disabled" : ""}`}
         onClick={onHint}
         disabled={disabled}
         type="button"
       >
-        <span style={{ fontSize: 13 }}>💡</span>
+        <span className="sd-hint-btn-icon">💡</span>
         Need a hint?
       </button>
     </div>

@@ -15,18 +15,16 @@ export default function HintConfirmModal({ onCancel, onConfirm }: HintConfirmMod
         </p>
         <div className="sd-hint-modal-actions">
           <button
-            className="sd-btn sd-btn--secondary"
+            className="sd-btn sd-btn--secondary sd-hint-modal-btn"
             onClick={onCancel}
             type="button"
-            style={{ width: "50%" }}
           >
             Cancel
           </button>
           <button
-            className="sd-btn sd-btn--primary"
+            className="sd-btn sd-btn--primary sd-hint-modal-btn"
             onClick={onConfirm}
             type="button"
-            style={{ width: "50%" }}
           >
             Reveal
           </button>

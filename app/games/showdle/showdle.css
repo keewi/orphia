@@ -469,20 +469,29 @@
 }
 
 /* ── Hint button ─────────────────────────────────────── */
+.sd-hint-btn-wrapper {
+  text-align: center;
+  margin: var(--space-4) 0 0;
+}
+
 .sd-hint-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   background: transparent;
   border: 1px solid var(--sd-hint);
   border-radius: var(--radius-md);
-  padding: 7px 14px;
+  padding: var(--space-2) var(--space-4);
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
   color: var(--sd-hint);
   cursor: pointer;
   transition: background 0.1s;
+}
+
+.sd-hint-btn-icon {
+  font-size: 13px;
 }
 
 .sd-hint-btn:hover {
@@ -550,7 +559,7 @@
 .sd-hint-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(26, 17, 8, 0.45);
+  background: rgba(26, 17, 8, 0.55);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -563,7 +572,7 @@
   border: var(--border-light);
   border-radius: var(--radius-xl);
   padding: var(--space-6) var(--space-5);
-  max-width: 280px;
+  max-width: 340px;
   width: 100%;
   text-align: center;
   animation: sd-hint-modal-enter 0.2s ease;
@@ -593,6 +602,10 @@
 .sd-hint-modal-actions {
   display: flex;
   gap: var(--space-2);
+}
+
+.sd-hint-modal-btn {
+  width: 50%;
 }
 
 /* ── Streak Badge ────────────────────────────────────── */
