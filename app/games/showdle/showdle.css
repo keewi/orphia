@@ -20,7 +20,7 @@
 
   /* ── Color: Game State ── */
   --sd-correct: #2d6a2d;       /* Green — matches sd-success */
-  --sd-correct-text: #eaf3e0;  /* Light green — matches sd-success-bg */
+  --sd-correct-text: #ffffff;  /* White on correct tile */
   --sd-present: #c8922a;       /* Gold */
   --sd-present-text: #ffffff;
   --sd-absent: #e8e0d4;
