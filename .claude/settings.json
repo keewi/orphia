@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/emilyyeh/Side\\ Projects/musical-search && git log -1 --format=%H 2>/dev/null | head -c 7 | grep -q . && claude --print 'Read these files and regenerate docs/game-development-context.md with the latest state: app/games/showdle/showdle.css, lib/db/showdle-schema.ts, package.json, middleware.ts, drizzle.config.ts, app/games/showdle/layout.tsx, app/games/showdle/page.tsx. Keep the same document structure and sections but update all values to match the current source files. Do not add any commentary, just write the file.' 2>/dev/null || true",
+            "timeout": 120,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
