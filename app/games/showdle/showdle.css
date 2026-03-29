@@ -265,10 +265,15 @@
   margin-bottom: var(--space-1);
 }
 
+/*
+ * Key width = (100% - 9 gaps) / 10, matching the widest row (10 keys).
+ * All rows use the same key width so letters line up vertically.
+ * ENT/DEL get 1.5× width.
+ */
 .sd-key {
   height: 42px;
-  min-width: 30px;
-  flex: 1;
+  width: calc((100% - 9 * 4px) / 10);
+  flex: 0 0 calc((100% - 9 * 4px) / 10);
   padding: 0 2px;
   display: flex;
   align-items: center;
@@ -295,8 +300,8 @@
 }
 
 .sd-key--wide {
-  flex: 1.5;
-  min-width: 38px;
+  width: calc(1.5 * (100% - 9 * 4px) / 10);
+  flex: 0 0 calc(1.5 * (100% - 9 * 4px) / 10);
   font-size: 10px;
 }
 
@@ -621,13 +626,10 @@
 
   .sd-key {
     height: 40px;
-    min-width: 36px;
-    flex: 0 0 auto;
     font-size: 13px;
   }
 
   .sd-key--wide {
-    min-width: 52px;
     font-size: 11px;
   }
 
