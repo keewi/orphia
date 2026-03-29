@@ -1,0 +1,523 @@
+/* ── NTS Design System ── */
+.nts-root {
+  /* Colours — from Orphia shared palette */
+  --nts-ink:            #1a1108;
+  --nts-cream:          #faf5ee;
+  --nts-surface:        #ffffff;
+  --nts-border:         #d4c9b8;
+  --nts-border-light:   #e0d5c4;
+  --nts-gold:           #c8922a;
+  --nts-gold-light:     #f0c060;
+  --nts-gold-bright:    #f5c842;  /* tile flash peak */
+  --nts-gold-muted:     #a08060;
+  --nts-gold-bg:        #fdf6e8;
+  --nts-correct:        #2d6a2d;
+  --nts-correct-bg:     #eaf4ea;
+  --nts-error:          #b03a2e;
+  --nts-error-bg:       #fcecea;
+  /* Absent — two tokens, two roles */
+  --nts-absent-bg:      #e8e0d4;  /* absent key background (context spec) */
+  --nts-absent-key:     #787c7e;  /* absent key fill (Showdle-matching grey) */
+  --nts-absent-text:    #7a7060;  /* muted text on cream */
+  --nts-key-unused:     #ede8df;
+  --nts-parchment:      #f0e8d8;
+  --nts-timer-track:    #3a3020;  /* dark track behind timer bar */
+  --nts-timer-warn:     #f08070;  /* timer number colour at ≤10s */
+
+  /* Border radius */
+  --nts-radius-sm:   4px;
+  --nts-radius-md:   6px;
+  --nts-radius-lg:   8px;
+  --nts-radius-xl:   14px;
+  --nts-radius-full: 9999px;
+
+  /* Spacing — 4px base unit (matches Orphia --space-* system) */
+  --nts-space-1:   4px;
+  --nts-space-2:   8px;
+  --nts-space-3:   12px;
+  --nts-space-4:   16px;
+  --nts-space-5:   20px;
+  --nts-space-6:   24px;
+  --nts-space-8:   32px;
+  --nts-space-10:  40px;
+  --nts-space-12:  48px;
+}
+
+.nts-root {
+  background: var(--nts-cream);
+  color: var(--nts-ink);
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  min-height: 100%;
+}
+
+.nts-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.nts-header {
+  background: var(--nts-ink);
+  padding: var(--nts-space-3) var(--nts-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--nts-gold);
+  flex-shrink: 0;
+}
+
+.nts-logo {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--nts-cream);
+  letter-spacing: 0.06em;
+}
+
+.nts-logo-accent { color: var(--nts-gold); }
+
+/* ── Timer ── */
+.nts-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nts-timer-track {
+  width: 80px;
+  height: 5px;
+  background: var(--nts-timer-track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.nts-timer-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--nts-gold);
+  transition: width 1s linear, background 0.5s;
+}
+
+.nts-timer-bar--warn { background: var(--nts-error); }
+
+.nts-timer-num {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--nts-cream);
+  min-width: 28px;
+  text-align: right;
+}
+
+.nts-timer-num--warn { color: var(--nts-timer-warn); }
+
+/* ── Game body ── */
+.nts-game-body {
+  padding: var(--nts-space-4) var(--nts-space-4) var(--nts-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--nts-space-3);
+  flex: 1;
+}
+
+/* ── Feedback area ── */
+.nts-feedback {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nts-radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  text-align: center;
+  transition: opacity 0.3s;
+}
+
+.nts-feedback--empty    { background: transparent; }
+.nts-feedback--prompt   { background: transparent; color: var(--nts-absent-text); font-weight: 400; font-style: italic; }
+.nts-feedback--correct  { background: var(--nts-correct-bg); color: var(--nts-correct); }
+.nts-feedback--absent   { background: var(--nts-absent-bg);  color: var(--nts-absent-text); }
+.nts-feedback--error    { background: var(--nts-error-bg);   color: var(--nts-error); }
+
+/* ── WoF Grid ── */
+.nts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.nts-grid-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Word-space gap — narrow invisible spacer between words on the same row */
+.nts-tile-gap {
+  width: 10px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.nts-tile {
+  width: 26px;
+  height: 32px;
+  border-radius: var(--nts-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.nts-tile--blank {
+  background: var(--nts-surface);
+  border: 2px solid var(--nts-border);
+}
+
+.nts-tile--revealed {
+  background: var(--nts-gold-bg);
+  border: 2px solid var(--nts-gold);
+  color: var(--nts-ink);
+}
+
+/* Punctuation: pre-filled parchment tile, never changes state */
+.nts-tile--punct {
+  background: var(--nts-key-unused);
+  border: 2px solid var(--nts-border);
+  color: var(--nts-ink);
+  font-size: 16px;
+}
+
+/* Flash animation for newly revealed tiles */
+@keyframes nts-tile-reveal {
+  0%   { background: var(--nts-gold-bright); border-color: var(--nts-gold-bright); }
+  40%  { background: var(--nts-gold-bright); border-color: var(--nts-gold-bright); }
+  100% { background: var(--nts-gold-bg);     border-color: var(--nts-gold); }
+}
+
+.nts-tile--flash {
+  animation: nts-tile-reveal 300ms ease-out forwards;
+  color: var(--nts-ink);
+}
+
+/* ── Keyboard ── */
+.nts-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.nts-key-row { display: flex; gap: 4px; }
+
+.nts-key {
+  height: 40px;
+  min-width: 28px;
+  padding: 0 3px;
+  border-radius: var(--nts-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  color: var(--nts-ink);
+  background: var(--nts-key-unused);
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.nts-key--correct {
+  background: var(--nts-gold);
+  color: #fff;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Absent key: Showdle-matching grey */
+.nts-key--absent {
+  background: var(--nts-absent-key);
+  color: #fff;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── Action bar ── */
+.nts-action-bar {
+  display: flex;
+  gap: var(--nts-space-2);
+  padding-top: 4px;
+}
+
+/* Hint button — default state */
+.nts-btn-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  background: transparent;
+  color: var(--nts-gold-muted);
+  border: 1.5px solid var(--nts-border-light);
+  border-radius: var(--nts-radius-lg);
+  padding: 10px 12px;
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Hint button — revealed state (fades in over 100ms) */
+@keyframes nts-hint-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.nts-btn-hint--revealed {
+  background: var(--nts-gold-bg);
+  color: var(--nts-gold-muted);
+  border: 2px solid var(--nts-gold);
+  cursor: default;
+  pointer-events: none;
+  font-size: 11.5px;
+  animation: nts-hint-fade-in 100ms ease-in forwards;
+}
+
+/* Guess the song button */
+.nts-btn-solve {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  background: transparent;
+  color: var(--nts-ink);
+  border: 1.5px solid var(--nts-border);
+  border-radius: var(--nts-radius-lg);
+  padding: 10px 12px;
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Primary gold button (Play Again) */
+.nts-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: var(--nts-gold);
+  color: #fff;
+  border: none;
+  border-radius: var(--nts-radius-lg);
+  padding: 13px 16px;
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ── Solve Modal ── */
+.nts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 17, 8, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.nts-modal-panel {
+  background: var(--nts-cream);
+  border-radius: var(--nts-radius-xl);
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nts-modal-title {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--nts-ink);
+}
+
+.nts-modal-subtitle {
+  font-size: 12px;
+  color: var(--nts-gold-muted);
+  margin-top: 5px;
+}
+
+.nts-modal-input {
+  border: 1.5px solid var(--nts-border);
+  border-radius: var(--nts-radius-md);
+  padding: 10px 12px;
+  font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px;
+  background: var(--nts-surface);
+  color: var(--nts-ink);
+  width: 100%;
+}
+
+.nts-modal-input::placeholder { color: var(--nts-absent-text); }
+
+.nts-modal-actions {
+  display: flex;
+  gap: var(--nts-space-2);
+}
+
+/* ── Completion Sheet ── */
+.nts-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 17, 8, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.nts-sheet {
+  background: var(--nts-cream);
+  border-radius: var(--nts-radius-xl) var(--nts-radius-xl) 0 0;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Win accent band */
+.nts-sheet-accent--win {
+  background: linear-gradient(135deg, var(--nts-gold) 0%, #e8a83a 100%);
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Loss accent band */
+.nts-sheet-accent--loss {
+  background: linear-gradient(135deg, #5a2020 0%, #7a3030 100%);
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nts-verdict-row {
+  display: flex;
+  align-items: center;
+  gap: var(--nts-space-2);
+}
+
+.nts-verdict-icon { font-size: 20px; line-height: 1; }
+.nts-verdict-text {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.nts-comp-song {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+}
+
+.nts-comp-show {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  font-style: italic;
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  margin-top: 2px;
+}
+
+/* Sheet body */
+.nts-sheet-body {
+  padding: 20px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nts-space-3);
+}
+
+.nts-solve-headline {
+  font-family: var(--nts-font-display, 'Playfair Display', Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--nts-ink);
+}
+
+.nts-solve-headline-accent { color: var(--nts-gold); }
+
+.nts-solve-headline--loss {
+  font-size: 16px;
+  color: var(--nts-error);
+}
+
+/* Stat chips */
+.nts-stat-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nts-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--nts-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.nts-chip--right  { background: var(--nts-correct-bg); color: var(--nts-correct); }
+.nts-chip--wrong  { background: var(--nts-absent-bg);  color: #fff; }
+.nts-chip--pct    { background: var(--nts-gold-bg); color: var(--nts-gold-muted); border: 1px solid var(--nts-border-light); }
+.nts-chip--hint   { background: var(--nts-absent-bg); color: #fff; }
+
+/* Wins today chip */
+.nts-wins-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--nts-radius-full);
+  background: linear-gradient(135deg, rgba(200,146,42,0.15) 0%, rgba(200,146,42,0.08) 100%);
+  border: 1px solid rgba(200,146,42,0.35);
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.nts-wins-chip-icon { font-size: 11px; color: var(--nts-gold); }
+.nts-wins-chip-num  { font-size: 12px; font-weight: 500; color: var(--nts-gold); }
+.nts-wins-chip-label { font-size: 12px; color: var(--nts-gold-muted); font-weight: 400; }
+
+.nts-sheet-divider {
+  height: 1px;
+  background: var(--nts-border-light);
+  margin: 4px 0;
+}

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Name That Song — HiFi Mockup v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:           #1a1108;
+    --cream:         #faf5ee;
+    --surface:       #ffffff;
+    --border:        #d4c9b8;
+    --border-light:  #e0d5c4;
+    --gold:          #c8922a;
+    --gold-light:    #f0c060;
+    --gold-bright:   #f5c842;   /* brighter flash for tile animation */
+    --gold-muted:    #a08060;
+    --gold-bg:       #fdf6e8;
+    --correct:       #2d6a2d;
+    --correct-bg:    #eaf4ea;
+    --error:         #b03a2e;
+    --error-bg:      #fcecea;
+    /* Showdle absent — matches exactly what Showdle uses for "not in word" */
+    --absent:        #787c7e;   /* Showdle grey for absent keys */
+    --absent-bg:     #e8e0d4;   /* absent key background */
+    --absent-text:   #7a7060;
+    --key-unused:    #ede8df;
+    --font-display:  'Playfair Display', Georgia, serif;
+    --font-ui:       'DM Sans', system-ui, sans-serif;
+    --r-sm: 4px; --r-md: 6px; --r-lg: 8px; --r-xl: 14px;
+    --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px;
+    --ann-blue: #2563EB; --ann-green: #16A34A; --ann-amber: #D97706;
+    --ann-red: #DC2626; --ann-purple: #A855F7;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0ece6; font-family: var(--font-ui); color: var(--ink); font-size: 14px; line-height: 1.5; }
+
+  /* ── Nav ── */
+  .nav { position: sticky; top: 0; z-index: 100; background: var(--ink); padding: 10px 24px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; border-bottom: 2px solid var(--gold); }
+  .nav-title { font-family: var(--font-display); font-size: 15px; color: var(--cream); margin-right: 12px; letter-spacing: .04em; }
+  .nav a { color: var(--gold-muted); text-decoration: none; font-size: 11px; padding: 3px 8px; border-radius: var(--r-sm); border: 1px solid #3a3020; }
+  .nav a:hover { background: #2e2510; color: var(--gold-light); }
+
+  /* ── Section ── */
+  .sec { padding: 48px 24px 32px; border-bottom: 1px solid #ddd6ca; }
+  .sec-lbl { font-size: 10px; font-weight: 500; letter-spacing: .18em; color: var(--gold-muted); text-transform: uppercase; margin-bottom: 6px; }
+  .sec-h { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .sec-d { font-size: 13px; color: var(--absent-text); max-width: 580px; margin-bottom: 28px; line-height: 1.6; }
+
+  /* ── Frame shell ── */
+  .fw { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .frame { background: var(--cream); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; width: 100%; max-width: 420px; box-shadow: 0 4px 24px rgba(26,17,8,.12); flex-shrink: 0; }
+  .fi { padding: var(--s4) var(--s4) var(--s6); display: flex; flex-direction: column; gap: var(--s3); }
+
+  /* ── Game header ── */
+  .hdr { background: var(--ink); padding: 14px var(--s4); display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); }
+  .logo { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--cream); letter-spacing: .06em; }
+  .logo span { color: var(--gold); }
+
+  /* ── Timer ── */
+  .tmr { display: flex; align-items: center; gap: 6px; }
+  .tmr-track { width: 80px; height: 5px; background: #3a3020; border-radius: 3px; overflow: hidden; }
+  .tmr-bar { height: 100%; border-radius: 3px; background: var(--gold); }
+  .tmr-bar.warn { background: var(--error); }
+  .tmr-n { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--cream); min-width: 28px; text-align: right; }
+
+  /* ── Feedback area ── */
+  .fb { min-height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-md); font-size: 13px; font-weight: 500; padding: 6px 14px; text-align: center; }
+  .fb.hint-prompt { background: transparent; color: var(--absent-text); font-weight: 400; font-style: italic; }
+  .fb.ok  { background: var(--correct-bg); color: var(--correct); }
+  .fb.no  { background: var(--absent-bg);  color: var(--absent); }
+  .fb.err { background: var(--error-bg);   color: var(--error); }
+  .fb.mt  { background: transparent; }
+
+  /* ── WoF Grid ── */
+  .grid { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 4px 0; }
+  .row  { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  /* Max 10 characters per row (letter tiles + word-space gaps); words that would exceed wrap to next row */
+  .t { width: 26px; height: 32px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+  .t.b { background: var(--surface); border: 2px solid var(--border); color: transparent; }
+  .t.r { background: var(--gold-bg); border: 2px solid var(--gold); color: var(--ink); }
+  /* Punctuation tile — pre-filled, parchment bg, never changes state */
+  .t.p { background: var(--key-unused); border: 2px solid var(--border); color: var(--ink); font-size: 16px; }
+  /* Word-space gap — narrow spacer between words on the same row, no border */
+  .t-sp { width: 10px; height: 32px; flex-shrink: 0; }
+  /* Flash state — brighter gold, used for the animation section */
+  .t.flash { background: var(--gold-bright); border: 2px solid var(--gold-bright); color: var(--ink); }
+  /* CSS animation for tile reveal */
+  @keyframes tileReveal {
+    0%   { background: var(--gold-bright); border-color: var(--gold-bright); }
+    40%  { background: var(--gold-bright); border-color: var(--gold-bright); } /* ~100ms hold */
+    100% { background: var(--gold-bg);     border-color: var(--gold); }         /* ~200ms fade */
+  }
+  .t.animating { animation: tileReveal 300ms ease-out forwards; }
+
+  /* ── Keyboard ── */
+  .kbd { display: flex; flex-direction: column; gap: 5px; align-items: center; padding: 4px 0; }
+  .krow { display: flex; gap: 4px; }
+  .k { height: 40px; min-width: 28px; padding: 0 3px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-family: var(--font-ui); font-size: 12px; font-weight: 500; cursor: pointer; border: none; color: var(--ink); background: var(--key-unused); }
+  /* Correct key — gold */
+  .k.c { background: var(--gold); color: #fff; cursor: default; }
+  /* Absent key — Showdle grey (#787c7e bg, white text) */
+  .k.a { background: var(--absent); color: #fff; cursor: default; }
+
+  /* ── Action bar ── */
+  .act-bar { display: flex; gap: var(--s2); padding-top: 4px; }
+  .btn-hint {
+    display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1;
+    background: transparent; color: var(--gold-muted);
+    border: 1.5px solid var(--border-light); border-radius: var(--r-lg);
+    padding: 10px var(--s3); font-family: var(--font-ui); font-size: 12px; cursor: pointer;
+  }
+  /* Hint revealed — matches revealed tile aesthetic, fades in over 100ms */
+  @keyframes hintFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .btn-hint.revealed {
+    background: var(--gold-bg); color: var(--gold-muted);
+    border: 2px solid var(--gold); cursor: default;
+    font-size: 11.5px;
+    animation: hintFadeIn 100ms ease-in forwards;
+  }
+  .btn-sec {
+    display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1;
+    background: transparent; color: var(--ink); border: 1.5px solid var(--border);
+    border-radius: var(--r-lg); padding: 10px var(--s3);
+    font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .btn-pri {
+    display: flex; align-items: center; justify-content: center; width: 100%;
+    background: var(--gold); color: #fff; border: none; border-radius: var(--r-lg);
+    padding: 13px var(--s4); font-family: var(--font-ui); font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+
+  /* ── Solve modal ── */
+  .overlay { background: rgba(26,17,8,.55); border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: var(--s4); min-height: 420px; }
+  .panel { background: var(--cream); border-radius: var(--r-xl); padding: var(--s6) var(--s5); width: 100%; display: flex; flex-direction: column; gap: var(--s4); }
+  .m-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--ink); }
+  .m-sub { font-size: 12px; color: var(--gold-muted); margin-top: 5px; }
+  .m-input { border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 10px 12px; font-family: var(--font-ui); font-size: 14px; background: var(--surface); color: var(--ink); width: 100%; }
+  .m-input::placeholder { color: var(--absent-text); }
+
+  /* ── Completion modal (beautified) ── */
+  .overlay-bot { background: rgba(26,17,8,.6); border-radius: 20px; display: flex; align-items: flex-end; min-height: 500px; }
+  .sheet {
+    background: var(--cream); border-radius: var(--r-xl) var(--r-xl) 0 0;
+    width: 100%; overflow: hidden;
+  }
+  /* Gold accent top band */
+  .sheet-accent {
+    background: linear-gradient(135deg, var(--gold) 0%, #e8a83a 100%);
+    padding: var(--s5) var(--s5) var(--s4);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .verdict-row { display: flex; align-items: center; gap: 8px; }
+  .verdict-icon { font-size: 20px; line-height: 1; }
+  .verdict-text { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: #fff; letter-spacing: .02em; }
+  .verdict-text.loss-text { color: rgba(255,255,255,.9); }
+  .comp-song { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: #fff; line-height: 1.15; }
+  .comp-show { font-size: 13px; color: rgba(255,255,255,.8); font-style: italic; font-family: var(--font-display); margin-top: 2px; }
+  /* Sheet body */
+  .sheet-body { padding: var(--s5) var(--s5) 28px; display: flex; flex-direction: column; gap: var(--s3); }
+  /* Solve headline */
+  .solve-hl { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--ink); }
+  .solve-hl span { color: var(--gold); }
+  .solve-hl.loss-hl { font-size: 16px; color: var(--error); }
+  /* Stat chips row */
+  .stat-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sc {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 9999px;
+    font-size: 12px; font-weight: 500; line-height: 1;
+  }
+  .sc-icon { font-size: 11px; line-height: 1; }
+  .sc.right  { background: var(--correct-bg); color: var(--correct); }
+  .sc.wrong  { background: var(--absent-bg);  color: var(--absent); }
+  .sc.pct    { background: var(--gold-bg); color: var(--gold-muted); border: 1px solid var(--border-light); }
+  .sc.time   { background: rgba(200,146,42,.12); color: var(--gold); border: 1px solid rgba(200,146,42,.3); }
+  /* Wins today chip */
+  .wins-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 9999px;
+    background: linear-gradient(135deg, rgba(200,146,42,.15) 0%, rgba(200,146,42,.08) 100%);
+    border: 1px solid rgba(200,146,42,.35);
+    align-self: flex-start;
+    font-size: 12px; font-weight: 500; line-height: 1;
+  }
+  .wins-chip-icon { font-size: 11px; line-height: 1; color: var(--gold); }
+  .wins-chip-num { font-size: 12px; font-weight: 500; color: var(--gold); line-height: 1; }
+  .wins-chip-label { font-size: 12px; color: var(--gold-muted); font-weight: 400; line-height: 1; }
+  /* Used hint chip — same aesthetic as .sc.wrong */
+  .sc.hint { background: var(--absent-bg); color: var(--absent); }
+  /* Divider */
+  .divider { height: 1px; background: var(--border-light); margin: 4px 0; }
+  /* Leaderboard */
+  .lb-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .lb-lbl { font-size: 10px; font-weight: 500; letter-spacing: .14em; color: var(--gold-muted); text-transform: uppercase; }
+  .lb-urow { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+  .lb-uinput { flex: 1; border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 8px 10px; font-family: var(--font-ui); font-size: 13px; background: var(--surface); color: var(--ink); }
+  .lb-sbtn { background: var(--gold); color: #fff; border: none; border-radius: var(--r-md); padding: 8px 14px; font-family: var(--font-ui); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .lb-tbl { width: 100%; border-collapse: collapse; }
+  .lb-tbl th { font-size: 10px; font-weight: 500; color: var(--absent-text); text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border-light); text-transform: uppercase; letter-spacing: .1em; }
+  .lb-tbl th:last-child { text-align: right; }
+  .lb-tbl td { padding: 6px; font-size: 12px; border-bottom: 1px solid var(--border-light); color: var(--ink); }
+  .lb-tbl td:last-child { text-align: right; font-weight: 500; }
+  .lb-tbl tr.me td { background: var(--gold-bg); }
+  .lb-rank { color: var(--absent-text); font-size: 11px; }
+
+  /* ── Annotations ── */
+  .ann { margin-top: 28px; max-width: 440px; }
+  .ann-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ai { display: flex; flex-direction: column; gap: 4px; }
+  .ah { display: flex; align-items: center; gap: 6px; }
+  .an { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .an.b { background: var(--ann-blue); } .an.g { background: var(--ann-green); }
+  .an.a { background: var(--ann-amber); } .an.r { background: var(--ann-red); }
+  .an.p { background: var(--ann-purple); }
+  .at { font-size: 12px; font-weight: 500; color: var(--ink); }
+  .ad { font-size: 11px; color: var(--absent-text); line-height: 1.5; padding-left: 26px; }
+  .ct { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: .08em; margin-right: 4px; }
+  .new { background: #dcfce7; color: #166534; }
+  .chg { background: #fef3c7; color: #92400e; }
+  .ic { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .footer { text-align: center; padding: 28px; font-size: 11px; color: var(--absent-text); }
+
+  /* SVG shorthand */
+  .svg-info { display:inline-block;vertical-align:middle; }
+  .svg-bulb { display:inline-block;vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-title">Name That Song — Mockup v4</span>
+  <a href="#s1">1. Start</a>
+  <a href="#s2">2. Wrong guess</a>
+  <a href="#s3">3. Correct guess</a>
+  <a href="#s4">4. Hint revealed</a>
+  <a href="#s5">5. Solve modal</a>
+  <a href="#s6">6. Win</a>
+  <a href="#s6b">6b. Win + hint</a>
+  <a href="#s7">7. Loss</a>
+  <a href="#s8">8. Leaderboard (PRD 3)</a>
+</nav>
+
+<!-- ═══════════════════════════
+     1 · INITIAL STATE
+     ═══════════════════════════ -->
+<section class="sec" id="s1">
+  <div class="sec-lbl">Section 1 · PRD 1B</div>
+  <div class="sec-h">Game — Initial state</div>
+  <div class="sec-d">Song: "You're the One That I Want" from Grease. Timer starts at 60s. Apostrophe pre-filled as a parchment tile. Grid packs max 10 per row (letters + punct + word-space gaps) — Row 1: YOU'RE·THE (10), Row 2: ONE·THAT (8), Row 3: I·WANT (6).</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="hdr">
+        <span class="logo">Name That <span>Song</span></span>
+        <div class="tmr">
+          <div class="tmr-track"><div class="tmr-bar" style="width:100%"></div></div>
+          <span class="tmr-n">60</span>
+        </div>
+      </div>
+      <div class="fi">
+        <!-- Initial prompt message -->
+        <div class="fb hint-prompt">Pick a letter to start guessing!</div>
+        <!-- YOU'RE THE ONE THAT I WANT — max 10 per row (letters + punct + space-gaps)
+             Row 1 (10): [Y][O][U]['][R][E][sp][T][H][E]
+             Row 2 (8):  [O][N][E][sp][T][H][A][T]
+             Row 3 (6):  [I][sp][W][A][N][T]               -->
+        <div class="grid">
+          <div class="row">
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div>
+            <div class="t p">'</div>
+            <div class="t b"></div><div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div>
+          </div>
+          <div class="row">
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t b"></div>
+          </div>
+          <div class="row">
+            <div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t b"></div>
+          </div>
+        </div>
+        <div class="kbd">
+          <div class="krow"><div class="k">Q</div><div class="k">W</div><div class="k">E</div><div class="k">R</div><div class="k">T</div><div class="k">Y</div><div class="k">U</div><div class="k">I</div><div class="k">O</div><div class="k">P</div></div>
+          <div class="krow"><div class="k">A</div><div class="k">S</div><div class="k">D</div><div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div></div>
+          <div class="krow"><div class="k">Z</div><div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div></div>
+        </div>
+        <div class="act-bar">
+          <div class="btn-hint">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+            Hint: Reveal show
+          </div>
+          <div class="btn-sec">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+            Guess the song
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an b">1</div><span class="at"><span class="ct new">New</span>Initial prompt</span></div><div class="ad">"Pick a letter to start guessing!" in muted italic. Replaces empty space before first guess. Disappears the moment the first key is pressed.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">2</div><span class="at"><span class="ct chg">Changed</span>Grid row layout — 10 per row</span></div><div class="ad">Max 10 per row (letter tiles + punct tiles + word-space gaps). "You're the One That I Want" → Row 1: YOU'RE·THE (10), Row 2: ONE·THAT (8), Row 3: I·WANT (6). Words pack greedily; if the next word + its gap would exceed 10, it wraps.</div></div>
+        <div class="ai"><div class="ah"><div class="an a">3</div><span class="at"><span class="ct chg">Changed</span>Punctuation tile style</span></div><div class="ad">Apostrophes and other punct characters render as a filled tile — <code>var(--key-unused)</code> background, <code>var(--border)</code> outline, ink-coloured character. Same size as letter tiles. Never changes state (no gold reveal, no flash) — it's pre-filled information, not a guessable letter.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     2 · WRONG GUESS
+     ═══════════════════════════ -->
+<section class="sec" id="s2">
+  <div class="sec-lbl">Section 2 · PRD 1B</div>
+  <div class="sec-h">Game — Wrong letter guess</div>
+  <div class="sec-d">User guessed O and E correctly. Then guessed Q — not in the song. Feedback shows grey absent message. Q and Z keys are grey. Timer at 44s.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="hdr">
+        <span class="logo">Name That <span>Song</span></span>
+        <div class="tmr">
+          <div class="tmr-track"><div class="tmr-bar" style="width:73%"></div></div>
+          <span class="tmr-n">44</span>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fb no">'Q' isn't in the song name</div>
+        <!-- YOU'RE THE ONE THAT I WANT — O and E revealed
+             Row 1 (10): [_][O][_]['][_][E][sp][_][_][E]
+             Row 2 (8):  [O][_][E][sp][_][_][_][_]
+             Row 3 (6):  [_][sp][_][_][_][_]              -->
+        <div class="grid">
+          <div class="row">
+            <div class="t b"></div><div class="t r">O</div><div class="t b"></div>
+            <div class="t p">'</div>
+            <div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t r">E</div>
+          </div>
+          <div class="row">
+            <div class="t r">O</div><div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t b"></div>
+          </div>
+          <div class="row">
+            <div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t b"></div>
+          </div>
+        </div>
+        <div class="kbd">
+          <div class="krow">
+            <div class="k a">Q</div><div class="k">W</div>
+            <div class="k c">E</div>
+            <div class="k">R</div><div class="k">T</div><div class="k">Y</div><div class="k">U</div><div class="k">I</div>
+            <div class="k c">O</div>
+            <div class="k">P</div>
+          </div>
+          <div class="krow">
+            <div class="k">A</div><div class="k">S</div><div class="k">D</div>
+            <div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div>
+          </div>
+          <div class="krow">
+            <div class="k a">Z</div>
+            <div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div>
+          </div>
+        </div>
+        <div class="act-bar">
+          <div class="btn-hint">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+            Hint: Reveal show
+          </div>
+          <div class="btn-sec">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+            Guess the song
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an a">4</div><span class="at"><span class="ct new">New</span>Absent feedback</span></div><div class="ad">Background <code>var(--absent-bg)</code> (#e8e0d4), text <code>var(--absent)</code> (#787c7e) — matches the key colour exactly. "'Q' isn't in the song name". Fades after 1.5s.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">5</div><span class="at"><span class="ct new">New</span>Absent key</span></div><div class="ad">Showdle absent style: <code>#787c7e</code> background, white text. Full opacity — not dimmed. <code>pointer-events: none</code>.</div></div>
+        <div class="ai"><div class="ah"><div class="an g">6</div><span class="at"><span class="ct new">New</span>Partial reveal</span></div><div class="ad">O and E tiles revealed across all word rows at once. Apostrophe was pre-filled from the start. T, H, A, N, R, I, W still blank.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     3 · CORRECT GUESS + ANIMATION
+     ═══════════════════════════ -->
+<section class="sec" id="s3">
+  <div class="sec-lbl">Section 3 · PRD 1B</div>
+  <div class="sec-h">Game — Correct letter guess (tile flash animation)</div>
+  <div class="sec-d">User just pressed T — it appears in THE, THAT, and WANT. Feedback is green. All four T tiles immediately flash to bright gold (shown at the ~100ms peak) before easing back over 200ms. The T key turns gold.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="hdr">
+        <span class="logo">Name That <span>Song</span></span>
+        <div class="tmr">
+          <div class="tmr-track"><div class="tmr-bar" style="width:60%"></div></div>
+          <span class="tmr-n">36</span>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fb ok">✓ T is in the song!</div>
+        <!-- YOU'RE THE ONE THAT I WANT — O, E revealed; T tiles flashing
+             Row 1 (10): [_][O][_]['][_][E][sp][T-f][_][E]
+             Row 2 (8):  [O][_][E][sp][T-f][_][_][T-f]
+             Row 3 (6):  [_][sp][_][_][_][T-f]              -->
+        <div class="grid">
+          <div class="row">
+            <div class="t b"></div><div class="t r">O</div><div class="t b"></div>
+            <div class="t p">'</div>
+            <div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t flash">T</div><div class="t b"></div><div class="t r">E</div>
+          </div>
+          <div class="row">
+            <div class="t r">O</div><div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t flash">T</div><div class="t b"></div><div class="t b"></div><div class="t flash">T</div>
+          </div>
+          <div class="row">
+            <div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t flash">T</div>
+          </div>
+        </div>
+        <div class="kbd">
+          <div class="krow">
+            <div class="k a">Q</div><div class="k">W</div>
+            <div class="k c">E</div>
+            <div class="k">R</div>
+            <div class="k c" style="background:var(--gold-bright);border:2px solid var(--gold-bright);">T</div>
+            <div class="k">Y</div><div class="k">U</div><div class="k">I</div>
+            <div class="k c">O</div>
+            <div class="k">P</div>
+          </div>
+          <div class="krow">
+            <div class="k">A</div><div class="k">S</div><div class="k">D</div>
+            <div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div>
+          </div>
+          <div class="krow">
+            <div class="k a">Z</div>
+            <div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div>
+          </div>
+        </div>
+        <div class="act-bar">
+          <div class="btn-hint">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+            Hint: Reveal show
+          </div>
+          <div class="btn-sec">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+            Guess the song
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an g">7</div><span class="ct new">New</span><span class="at">Green feedback</span></div><div class="ad">Green bg (<code>var(--correct-bg)</code>), green text, "✓ R is in the song!" — fades after 1.5s. Fires on every correct guess.</div></div>
+        <div class="ai"><div class="ah"><div class="an a">8</div><span class="at"><span class="ct new">New</span>Tile flash — peak state</span></div><div class="ad">Newly revealed tiles: immediately snap to <code>var(--gold-bright)</code> (#f5c842). Mockup shows the 100ms hold at peak brightness before the ease-out begins.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">9</div><span class="at"><span class="ct new">New</span>CSS animation spec</span></div><div class="ad"><code>@keyframes tileReveal</code>: 0–40% hold at bright gold (~100ms), 40–100% ease to <code>var(--gold-bg)</code> + <code>var(--gold)</code> border (~200ms). Total: 300ms.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">10</div><span class="at"><span class="ct new">New</span>All instances reveal at once</span></div><div class="ad">T appears in THE, THAT (×2), and WANT — all four tiles flash simultaneously. The T key snaps to bright gold at the same moment, then eases to standard gold alongside the tiles.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     4 · HINT REVEALED
+     ═══════════════════════════ -->
+<section class="sec" id="s4">
+  <div class="sec-lbl">Section 4 · PRD 1B</div>
+  <div class="sec-h">Game — Hint revealed</div>
+  <div class="sec-d">User clicked "Hint: Reveal show". The button immediately transitions — gold-bg fill, gold border, text becomes "Show: Grease" — and fades in over 100ms. Full opacity, not greyed out.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="hdr">
+        <span class="logo">Name That <span>Song</span></span>
+        <div class="tmr">
+          <div class="tmr-track"><div class="tmr-bar" style="width:43%"></div></div>
+          <span class="tmr-n">26</span>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fb mt"></div>
+        <!-- YOU'RE THE ONE THAT I WANT — O, E, T revealed
+             Row 1 (10): [_][O][_]['][_][E][sp][T][_][E]
+             Row 2 (8):  [O][_][E][sp][T][_][_][T]
+             Row 3 (6):  [_][sp][_][_][_][T]              -->
+        <div class="grid">
+          <div class="row">
+            <div class="t b"></div><div class="t r">O</div><div class="t b"></div>
+            <div class="t p">'</div>
+            <div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t r">T</div><div class="t b"></div><div class="t r">E</div>
+          </div>
+          <div class="row">
+            <div class="t r">O</div><div class="t b"></div><div class="t r">E</div>
+            <div class="t-sp"></div>
+            <div class="t r">T</div><div class="t b"></div><div class="t b"></div><div class="t r">T</div>
+          </div>
+          <div class="row">
+            <div class="t b"></div>
+            <div class="t-sp"></div>
+            <div class="t b"></div><div class="t b"></div><div class="t b"></div><div class="t r">T</div>
+          </div>
+        </div>
+        <div class="kbd">
+          <div class="krow">
+            <div class="k a">Q</div><div class="k">W</div>
+            <div class="k c">E</div>
+            <div class="k">R</div>
+            <div class="k c">T</div>
+            <div class="k">Y</div><div class="k">U</div><div class="k">I</div>
+            <div class="k c">O</div>
+            <div class="k">P</div>
+          </div>
+          <div class="krow">
+            <div class="k">A</div><div class="k">S</div><div class="k">D</div>
+            <div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div>
+          </div>
+          <div class="krow">
+            <div class="k a">Z</div>
+            <div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div>
+          </div>
+        </div>
+        <div class="act-bar">
+          <div class="btn-hint revealed">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+            Show: Grease
+          </div>
+          <div class="btn-sec">
+            <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+            Guess the song
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an a">11</div><span class="at"><span class="ct chg">Changed</span>Hint — revealed state</span></div><div class="ad">On click: button transitions to <code>var(--gold-bg)</code> fill + 2px <code>var(--gold)</code> border. Text changes to "Show: Grease". Content fades in via <code>@keyframes hintFadeIn</code> over 100ms. <code>pointer-events: none</code>. Full opacity — no dimming.</div></div>
+        <div class="ai"><div class="ah"><div class="an g">12</div><span class="at"><span class="ct chg">Changed</span>Fade-in animation</span></div><div class="ad"><code>@keyframes hintFadeIn { from { opacity:0 } to { opacity:1 } }</code> applied to <code>.btn-hint.revealed</code>. Duration: 100ms, <code>ease-in</code>. The text appears to "reveal" with the same feel as a tile uncovering.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">13</div><span class="at"><span class="ct new">New</span>"Show:" prefix</span></div><div class="ad">"Show: Grease" replaces "Hint: Reveal show" — states a fact rather than offering an action. Shorter, immediately readable.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     5 · SOLVE MODAL
+     ═══════════════════════════ -->
+<section class="sec" id="s5">
+  <div class="sec-lbl">Section 5 · PRD 1B</div>
+  <div class="sec-h">Solve modal</div>
+  <div class="sec-d">User clicked "Guess the song". Ink overlay, cream panel. Timer keeps ticking.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="overlay">
+        <div class="panel">
+          <div>
+            <div class="m-title">Guess the song</div>
+            <div class="m-sub">Enter the full song title to solve</div>
+          </div>
+          <input class="m-input" placeholder="Song title..." value="I Dreamed a Dr">
+          <div style="display:flex;gap:8px;">
+            <div class="btn-pri" style="flex:1.4;width:auto;padding:11px 14px;font-size:13px;">Submit guess</div>
+            <div class="btn-sec" style="flex:1;">Cancel</div>
+          </div>
+          <div style="font-size:11px;color:var(--absent-text);text-align:center;">Punctuation and case are ignored</div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an b">14</div><span class="at"><span class="ct new">New</span>Modal</span></div><div class="ad">Ink overlay at 55%. Cream panel, <code>var(--r-xl)</code>. Title/subtitle have clear 5px spacing — not collapsed.</div></div>
+        <div class="ai"><div class="ah"><div class="an a">15</div><span class="at"><span class="ct new">New</span>Normalise input</span></div><div class="ad"><code>toLowerCase().trim().replace(/[^a-z0-9 ]/g,'')</code> applied to both input and answer before comparison. Timer continues.</div></div>
+        <div class="ai"><div class="ah"><div class="an r">16</div><span class="at"><span class="ct new">New</span>Wrong solve</span></div><div class="ad">Modal closes, red feedback fires, <code>wrongSolveAttempts++</code>. Game continues.</div></div>
+        <div class="ai"><div class="ah"><div class="an g">17</div><span class="at"><span class="ct new">New</span>Correct solve</span></div><div class="ad">All tiles reveal with flash animation, brief green feedback, then <code>gameStatus → 'won'</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     6 · WIN (BEAUTIFIED)
+     ═══════════════════════════ -->
+<section class="sec" id="s6">
+  <div class="sec-lbl">Section 6 · PRD 1B + PRD 2</div>
+  <div class="sec-h">Completion modal — Win</div>
+  <div class="sec-d">Gold accent header band with verdict, song title, and musical name. Stats and wins today in the body. No hint used.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="overlay-bot">
+        <div class="sheet">
+          <div class="sheet-accent">
+            <div class="verdict-row">
+              <span class="verdict-icon">✓</span>
+              <span class="verdict-text">You got it!</span>
+            </div>
+            <div class="comp-song">You're the One That I Want</div>
+            <div class="comp-show">from Grease</div>
+          </div>
+          <div class="sheet-body">
+            <div class="solve-hl">Solved in <span>22 seconds!</span></div>
+            <div class="stat-chips">
+              <div class="sc right"><span class="sc-icon">✓</span> 9 right</div>
+              <div class="sc wrong"><span class="sc-icon">✗</span> 3 wrong</div>
+              <div class="sc pct">75% correct</div>
+            </div>
+            <div class="wins-chip"><span class="wins-chip-icon">★</span><span class="wins-chip-num">2</span><span class="wins-chip-label">wins today</span></div>
+            <div class="btn-pri">Play Again</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an a">18</div><span class="at"><span class="ct chg">Changed</span>Gold accent header</span></div><div class="ad">Gold-to-amber gradient band: verdict, song title (Playfair, white, large), musical name (italic translucent white). Immediately communicates outcome.</div></div>
+        <div class="ai"><div class="ah"><div class="an g">19</div><span class="at"><span class="ct new">New</span>Solve headline</span></div><div class="ad">"Solved in X seconds!" — X gold-accented. Largest stat in body. <code>60 − timeRemaining</code>.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">20</div><span class="at"><span class="ct chg">Changed</span>Stat chips row</span></div><div class="ad">Three pill chips: ✓ green for right count, ✗ grey for wrong count, % gold-bg for accuracy. Each chip uses its semantic colour from the design system — not plain text. Scannable at a glance.</div></div>
+        <div class="ai"><div class="ah"><div class="an p">21</div><span class="at"><span class="ct new">New</span>Wins today</span></div><div class="ad">Single muted line from localStorage daily stats. Sits below the chips — secondary context, not a focal point.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     6b · WIN + HINT USED
+     ═══════════════════════════ -->
+<section class="sec" id="s6b">
+  <div class="sec-lbl">Section 6b · PRD 1B + PRD 2</div>
+  <div class="sec-h">Completion modal — Win (hint used)</div>
+  <div class="sec-d">Same win layout. "Solved with hint" appears as a small italic gold line below wins today.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="overlay-bot">
+        <div class="sheet">
+          <div class="sheet-accent">
+            <div class="verdict-row">
+              <span class="verdict-icon">✓</span>
+              <span class="verdict-text">You got it!</span>
+            </div>
+            <div class="comp-song">You're the One That I Want</div>
+            <div class="comp-show">from Grease</div>
+          </div>
+          <div class="sheet-body">
+            <div class="solve-hl">Solved in <span>38 seconds!</span></div>
+            <div class="stat-chips">
+              <div class="sc right"><span class="sc-icon">✓</span> 11 right</div>
+              <div class="sc wrong"><span class="sc-icon">✗</span> 2 wrong</div>
+              <div class="sc pct">85% correct</div>
+              <div class="sc hint">Used Hint</div>
+            </div>
+            <div class="wins-chip"><span class="wins-chip-icon">★</span><span class="wins-chip-num">1</span><span class="wins-chip-label">win today</span></div>
+            <div class="btn-pri">Play Again</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an p">22</div><span class="at"><span class="ct new">New</span>"Solved with hint"</span></div><div class="ad">11px italic <code>var(--gold-muted)</code> with ⓘ icon. One line only, no card or badge. Conditionally rendered — absent entirely when <code>hintUsed === false</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     7 · LOSS (BEAUTIFIED)
+     ═══════════════════════════ -->
+<section class="sec" id="s7">
+  <div class="sec-lbl">Section 7 · PRD 1B + PRD 2</div>
+  <div class="sec-h">Completion modal — Loss</div>
+  <div class="sec-d">Timer hit 0. The header band changes to a darker, muted version — same structure, different colour signal. Song is revealed as the answer.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="overlay-bot">
+        <div class="sheet">
+          <div class="sheet-accent" style="background: linear-gradient(135deg, #5a2020 0%, #7a3030 100%);">
+            <div class="verdict-row">
+              <span class="verdict-icon" style="color:#f08070;">✕</span>
+              <span class="verdict-text loss-text">Time's up</span>
+            </div>
+            <div class="comp-song">You're the One That I Want</div>
+            <div class="comp-show">from Grease</div>
+          </div>
+          <div class="sheet-body">
+            <div class="solve-hl loss-hl">7 of 18 letters revealed</div>
+            <div class="stat-chips">
+              <div class="sc right"><span class="sc-icon">✓</span> 7 right</div>
+              <div class="sc wrong"><span class="sc-icon">✗</span> 6 wrong</div>
+              <div class="sc pct">39% correct</div>
+            </div>
+            <div class="wins-chip"><span class="wins-chip-icon">★</span><span class="wins-chip-num">1</span><span class="wins-chip-label">win today</span></div>
+            <div class="btn-pri">Play Again</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an r">23</div><span class="at"><span class="ct chg">Changed</span>Loss header band</span></div><div class="ad">Deep red gradient (dark crimson → lighter) instead of gold. Same layout: verdict + song title + musical. Colour alone signals the outcome.</div></div>
+        <div class="ai"><div class="ah"><div class="an a">24</div><span class="at"><span class="ct new">New</span>Loss headline</span></div><div class="ad">"X of Y letters revealed" in <code>var(--error)</code>. X = revealed tile count, Y = total letter tiles (excludes spaces/punctuation).</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════
+     8 · LEADERBOARD (PRD 3)
+     ═══════════════════════════ -->
+<section class="sec" id="s8">
+  <div class="sec-lbl">Section 8 · PRD 3</div>
+  <div class="sec-h">Completion modal — with leaderboard</div>
+  <div class="sec-d">PRD 3 adds username entry and global top-10. Play Again sits above the leaderboard so user can replay without scrolling past the board.</div>
+  <div class="fw">
+    <div class="frame">
+      <div class="overlay-bot">
+        <div class="sheet">
+          <div class="sheet-accent">
+            <div class="verdict-row">
+              <span class="verdict-icon">✓</span>
+              <span class="verdict-text">You got it!</span>
+            </div>
+            <div class="comp-song">You're the One That I Want</div>
+            <div class="comp-show">from Grease</div>
+          </div>
+          <div class="sheet-body" style="max-height:430px;overflow-y:auto;">
+            <div class="solve-hl">Solved in <span>33 seconds!</span></div>
+            <div class="stat-chips">
+              <div class="sc right"><span class="sc-icon">✓</span> 11 right</div>
+              <div class="sc wrong"><span class="sc-icon">✗</span> 1 wrong</div>
+              <div class="sc pct">92% correct</div>
+            </div>
+            <div class="wins-chip"><span class="wins-chip-icon">★</span><span class="wins-chip-num">3</span><span class="wins-chip-label">wins today</span></div>
+            <div class="btn-pri">Play Again</div>
+            <div class="divider"></div>
+            <div class="lb-wrap">
+              <div class="lb-lbl">Leaderboard — wins without hint</div>
+              <div class="lb-urow">
+                <input class="lb-uinput" placeholder="Enter a username" value="musicfan42">
+                <div class="lb-sbtn">Submit score</div>
+              </div>
+              <table class="lb-tbl">
+                <thead><tr><th>#</th><th>Username</th><th>Wins</th></tr></thead>
+                <tbody>
+                  <tr><td class="lb-rank">1</td><td>broadwaybuff</td><td>24</td></tr>
+                  <tr><td class="lb-rank">2</td><td>jazzlover</td><td>19</td></tr>
+                  <tr><td class="lb-rank">3</td><td>showtuneking</td><td>17</td></tr>
+                  <tr class="me"><td class="lb-rank">4</td><td><strong>musicfan42</strong></td><td>14</td></tr>
+                  <tr><td class="lb-rank">5</td><td>hamiltonian99</td><td>11</td></tr>
+                  <tr><td class="lb-rank">6</td><td>wickedwitch_w</td><td>9</td></tr>
+                  <tr><td class="lb-rank">7</td><td>renthead</td><td>8</td></tr>
+                  <tr><td class="lb-rank">8</td><td>phantomfan</td><td>6</td></tr>
+                  <tr><td class="lb-rank">9</td><td>chicagolights</td><td>5</td></tr>
+                  <tr><td class="lb-rank">10</td><td>lion_king_fan</td><td>4</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <div class="ann-grid">
+        <div class="ai"><div class="ah"><div class="an a">25</div><span class="at"><span class="ct new">New</span>Play Again above board</span></div><div class="ad">Play Again button sits above the divider — user replays immediately without needing to scroll past the leaderboard.</div></div>
+        <div class="ai"><div class="ah"><div class="an g">26</div><span class="at"><span class="ct new">New</span>Username input</span></div><div class="ad">Pre-filled from <code>localStorage['nts-v1-username']</code>. Max 20 chars. Submit disabled until non-empty. Saves on submit.</div></div>
+        <div class="ai"><div class="ah"><div class="an b">27</div><span class="at"><span class="ct new">New</span>Leaderboard</span></div><div class="ad">Top 10 by wins without hint. Current user row: <code>var(--gold-bg)</code> highlight. Fresh fetch on every modal open via GET <code>/api/name-that-song/leaderboard</code>.</div></div>
+        <div class="ai"><div class="ah"><div class="an p">28</div><span class="at"><span class="ct new">New</span>Scrollable body</span></div><div class="ad">Sheet body: <code>max-height: 430px; overflow-y: auto</code>. Play Again reachable without scroll. Leaderboard flows below.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="footer">Name That Song — HiFi Mockup · v4.0 · March 2026 · Orphia Games</div>
+</body>
+</html>

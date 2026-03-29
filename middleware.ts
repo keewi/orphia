@@ -13,7 +13,7 @@ export default auth(async (req) => {
 
   // Public routes that don't need auth
   const isPublicRoute =
-    pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname.startsWith("/games/showdle") || pathname.startsWith("/api/showdle");
+    pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname.startsWith("/games/showdle") || pathname.startsWith("/api/showdle") || pathname.startsWith("/games/name-that-song") || pathname.startsWith("/api/name-that-song");
 
   // Unauthenticated user on a protected route -> redirect to Showdle
   if (!user && !isPublicRoute) {
