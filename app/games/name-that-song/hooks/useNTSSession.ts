@@ -20,6 +20,8 @@ export interface NTSSessionReturn {
   deviceId: string;
   todayStats: DailyStats;
   recordResult: (result: GameResult) => void;
+  lastUsername: string;
+  saveUsername: (name: string) => void;
 }
 
 // UTC date string: 'YYYY-MM-DD'
@@ -75,6 +77,17 @@ function saveResult(result: GameResult): void {
 export function useNTSSession(): NTSSessionReturn {
   const [deviceId] = useState<string>(() => getOrCreateDeviceId());
   const [todayStats, setTodayStats] = useState<DailyStats>(() => loadTodayStats());
+  const [lastUsername, setLastUsername] = useState<string>(() => {
+    try { return localStorage.getItem("nts-v1-username") ?? ""; }
+    catch { return ""; }
+  });
+
+  const saveUsername = useCallback((name: string) => {
+    const trimmed = name.trim().slice(0, 20);
+    setLastUsername(trimmed);
+    try { localStorage.setItem("nts-v1-username", trimmed); }
+    catch {}
+  }, []);
 
   const recordResult = useCallback((result: GameResult) => {
     // Dedup: if this song was already recorded today, do nothing
@@ -92,5 +105,5 @@ export function useNTSSession(): NTSSessionReturn {
     setTodayStats(updated);
   }, []);
 
-  return { deviceId, todayStats, recordResult };
+  return { deviceId, todayStats, recordResult, lastUsername, saveUsername };
 }

@@ -96,6 +96,10 @@ export default function NTSGame({
           musicalName={musicalName}
           stats={game.getCompletionStats(session.todayStats.wins)}
           onPlayAgain={() => router.refresh()}
+          deviceId={session.deviceId}
+          songId={songId}
+          lastUsername={session.lastUsername}
+          onSaveUsername={session.saveUsername}
         />
       )}
     </>
