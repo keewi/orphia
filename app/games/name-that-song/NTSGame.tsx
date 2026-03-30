@@ -1,6 +1,8 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useNTSGameState } from "./hooks/useNTSGameState";
+import { useNTSSession } from "./hooks/useNTSSession";
 import NTSHeader from "./components/NTSHeader";
 import NTSFeedback from "./components/NTSFeedback";
 import NTSGrid from "./components/NTSGrid";
@@ -21,12 +23,28 @@ export default function NTSGame({
   musicalName,
 }: NTSGameProps) {
   const router = useRouter();
+  const session = useNTSSession();
   const game = useNTSGameState(songId, songTitle, musicalName);
+  const resultRecorded = useRef(false);
+
+  // Record result exactly once when game ends
+  useEffect(() => {
+    if (game.gameStatus === "playing" || resultRecorded.current) return;
+    resultRecorded.current = true;
+
+    const stats = game.getCompletionStats(0);
+    // PRD 3: pass session.deviceId for leaderboard submission
+    session.recordResult({
+      songId,
+      outcome: game.gameStatus,
+      hintUsed: game.hintUsed,
+      timeSpent: stats.timeSpent,
+      rightLetters: stats.rightLetters,
+      wrongLetters: stats.wrongLetters,
+    });
+  }, [game.gameStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isPlaying = game.gameStatus === "playing";
-
-  // PRD 2 will replace this with session.todayStats.wins
-  const WINS_TODAY_PLACEHOLDER = 0;
 
   return (
     <>
@@ -76,7 +94,7 @@ export default function NTSGame({
           status={game.gameStatus}
           songTitle={songTitle}
           musicalName={musicalName}
-          stats={game.getCompletionStats(WINS_TODAY_PLACEHOLDER)}
+          stats={game.getCompletionStats(session.todayStats.wins)}
           onPlayAgain={() => router.refresh()}
         />
       )}

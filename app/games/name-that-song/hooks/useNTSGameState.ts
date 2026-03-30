@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LetterState, GameStatus, FeedbackType, CompletionStats } from "../types";
 
 interface GameState {
@@ -62,8 +62,6 @@ export function useNTSGameState(
     wrongSolveAttempts: 0,
   });
 
-  const feedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // Timer
   useEffect(() => {
     if (state.gameStatus !== "playing") return;
@@ -90,14 +88,8 @@ export function useNTSGameState(
     }
   }, [state.guessedLetters, state.gameStatus, uniqueLetters]);
 
-  const setFeedback = useCallback((type: FeedbackType, message: string, autoClear = true) => {
-    if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
+  const setFeedback = useCallback((type: FeedbackType, message: string) => {
     setState((prev) => ({ ...prev, feedbackType: type, feedbackMessage: message }));
-    if (autoClear) {
-      feedbackTimeout.current = setTimeout(() => {
-        setState((prev) => ({ ...prev, feedbackType: "empty", feedbackMessage: "" }));
-      }, 1500);
-    }
   }, []);
 
   const guessLetter = useCallback((letter: string) => {
@@ -116,7 +108,7 @@ export function useNTSGameState(
             f.delete(letter);
             return { ...s, flashLetters: f };
           });
-        }, 300);
+        }, 900);
 
         setFeedback("correct", `\u2713 ${letter} is in the song!`);
         return {

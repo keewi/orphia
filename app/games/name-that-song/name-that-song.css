@@ -116,25 +116,28 @@
 
 /* ── Game body ── */
 .nts-game-body {
+  --nts-key-gap: 5px;
   padding: var(--nts-space-4) var(--nts-space-4) var(--nts-space-6);
   display: flex;
   flex-direction: column;
   gap: var(--nts-space-3);
   flex: 1;
+  container-type: inline-size;
 }
 
 /* ── Feedback area ── */
 .nts-feedback {
-  min-height: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--nts-radius-md);
   font-size: 13px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 0 14px;
   text-align: center;
   transition: opacity 0.3s;
+  flex-shrink: 0;
 }
 
 .nts-feedback--empty    { background: transparent; }
@@ -161,13 +164,13 @@
 /* Word-space gap — narrow invisible spacer between words on the same row */
 .nts-tile-gap {
   width: 10px;
-  height: 32px;
   flex-shrink: 0;
 }
 
+/* Tile size matches keyboard key size: (container - 9 gaps) / 10 */
 .nts-tile {
-  width: 26px;
-  height: 32px;
+  width: calc((100cqi - 9 * var(--nts-key-gap)) / 10);
+  aspect-ratio: 1;
   border-radius: var(--nts-radius-sm);
   display: flex;
   align-items: center;
@@ -196,39 +199,65 @@
   font-size: 16px;
 }
 
-/* Flash animation for newly revealed tiles */
+/* Flash animation for newly revealed tiles — glow pulse */
 @keyframes nts-tile-reveal {
-  0%   { background: var(--nts-gold-bright); border-color: var(--nts-gold-bright); }
-  40%  { background: var(--nts-gold-bright); border-color: var(--nts-gold-bright); }
-  100% { background: var(--nts-gold-bg);     border-color: var(--nts-gold); }
+  0%   { box-shadow: 0 0 0 0 rgba(200, 146, 42, 0); }
+  22.2%  { box-shadow: 0 0 8px 4px rgba(200, 146, 42, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 146, 42, 0); }
 }
 
 .nts-tile--flash {
-  animation: nts-tile-reveal 300ms ease-out forwards;
+  background: var(--nts-gold-bg);
+  border: 2px solid var(--nts-gold);
   color: var(--nts-ink);
+  animation: nts-tile-reveal 900ms ease-out forwards;
 }
 
 /* ── Keyboard ── */
+/* All rows use CSS grid with 10 columns. Top row fills all 10.
+   Rows 2–3 have fewer keys but same column size, so keys stay uniform. */
 .nts-keyboard {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: var(--nts-key-gap);
   padding: 4px 0;
 }
 
-.nts-key-row { display: flex; gap: 4px; }
+/* Each row spans all 10 columns, then lays out its own keys as a sub-grid */
+.nts-key-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: var(--nts-key-gap);
+}
+
+/* Row 2 (9 keys): offset by half a column to center */
+.nts-key-row:nth-child(2) {
+  grid-template-columns: 0.5fr repeat(9, 1fr) 0.5fr;
+}
+.nts-key-row:nth-child(2)::before,
+.nts-key-row:nth-child(2)::after {
+  content: "";
+}
+
+/* Row 3 (7 keys): offset by 1.5 columns to center */
+.nts-key-row:nth-child(3) {
+  grid-template-columns: 1.5fr repeat(7, 1fr) 1.5fr;
+}
+.nts-key-row:nth-child(3)::before,
+.nts-key-row:nth-child(3)::after {
+  content: "";
+}
 
 .nts-key {
-  height: 40px;
-  min-width: 28px;
-  padding: 0 3px;
+  aspect-ratio: 1;
+  padding: 0;
   border-radius: var(--nts-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--nts-font-ui, 'DM Sans', system-ui, sans-serif);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   border: none;
@@ -342,7 +371,7 @@
 
 .nts-modal-panel {
   background: var(--nts-cream);
-  border-radius: var(--nts-radius-xl);
+  border-radius: var(--nts-radius-sm);
   padding: 24px 20px;
   width: 100%;
   max-width: 440px;
@@ -383,18 +412,26 @@
 }
 
 /* ── Completion Sheet ── */
+@keyframes nts-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .nts-sheet-overlay {
   position: fixed;
   inset: 0;
   background: rgba(26, 17, 8, 0.6);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
+  padding-top: 10vh;
+  justify-content: center;
   z-index: 1000;
+  animation: nts-fade-in 200ms ease-out;
 }
 
 .nts-sheet {
   background: var(--nts-cream);
-  border-radius: var(--nts-radius-xl) var(--nts-radius-xl) 0 0;
+  border-radius: var(--nts-radius-sm);
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
