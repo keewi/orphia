@@ -13,19 +13,19 @@ export default auth(async (req) => {
 
   // Public routes that don't need auth
   const isPublicRoute =
-    pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname.startsWith("/games/showdle") || pathname.startsWith("/api/showdle") || pathname.startsWith("/games/name-that-song") || pathname.startsWith("/api/name-that-song");
+    pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname === "/games" || pathname.startsWith("/games/showdle") || pathname.startsWith("/api/showdle") || pathname.startsWith("/games/name-that-song") || pathname.startsWith("/api/name-that-song");
 
-  // Unauthenticated user on a protected route -> redirect to Showdle
+  // Unauthenticated user on a protected route -> redirect to /games
   if (!user && !isPublicRoute) {
     const url = req.nextUrl.clone();
-    url.pathname = "/games/showdle";
+    url.pathname = "/games";
     return NextResponse.redirect(url);
   }
 
-  // /login -> redirect to Showdle
-  if (pathname.startsWith("/login")) {
+  // /login or root -> redirect to /games
+  if (pathname === "/" || pathname.startsWith("/login")) {
     const url = req.nextUrl.clone();
-    url.pathname = "/games/showdle";
+    url.pathname = "/games";
     return NextResponse.redirect(url);
   }
 

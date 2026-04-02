@@ -223,3 +223,27 @@ Run with: `npx tsx scripts/seed-[game].ts`
 **Key UI:** Header → Lyric card → Tile board (6 rows × N cols) → QWERTY keyboard (sticky bottom on mobile).
 **State:** `useGameState` hook manages guesses, evaluations, current input, win/loss status, and hint tracking. Persisted to localStorage.
 **Post-game:** RevealModal shows result, show name, cast info, difficulty badge, and a 6-row mini scoreboard.
+
+---
+
+## 7. Existing Game: Name That Song Summary
+
+**Concept:** Wheel-of-Fortune-style song title guessing game for musical theater fans.
+**Route:** `/games/name-that-song`
+**Mechanic:** A random song title is hidden. Guess letters to reveal them before the 60-second timer runs out. One hint available (reveals the musical name). Can also attempt to solve the full title directly.
+**Key UI:** Header with timer → Feedback toast (persistent) → Letter tile grid (tiles match keyboard key size via CSS container queries) → QWERTY keyboard (CSS grid, uniform keys) → Action bar (Hint + Solve buttons).
+**State:** `useNTSGameState` hook manages guessed letters, timer countdown, flash animations, solve modal, and game status (playing/won/lost). `useNTSSession` hook manages device ID, daily stats, and username persistence in localStorage.
+**Post-game:** Completion modal (positioned 10vh from top, 200ms fade-in) shows result, stats chips, wins-today count, Play Again button, and a global leaderboard section with username input and score submission.
+**Leaderboard:** Top 10 ranked by wins without hint. Server-side via `nts_results` table. POST `/api/name-that-song/results/submit`, GET `/api/name-that-song/leaderboard`.
+**CSS prefix:** `nts-`
+**Schema:** `lib/db/nts-schema.ts` — `nts_musicals`, `nts_songs`, `nts_results` tables.
+
+---
+
+## 8. Games Landing Page
+
+**Route:** `/games`
+**Purpose:** Hub page listing all available games. First page users see (both `/` and `/login` redirect here via middleware).
+**Current implementation:** Two stacked game cards (Showdle + Name That Song), each with icon, title, description, badge (Daily/Unlimited), and gold CTA link.
+**Styling:** Currently uses the Orphia dark theme (globals.css). Planned redesign to match the warm parchment/cream aesthetic of the game pages.
+**Middleware:** `/games` is in the public routes list (no auth required).
