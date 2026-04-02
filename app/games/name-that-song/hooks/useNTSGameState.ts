@@ -80,7 +80,7 @@ export function useNTSGameState(
   // Check win condition after guesses update
   useEffect(() => {
     if (state.gameStatus !== "playing") return;
-    const allRevealed = [...uniqueLetters].every(
+    const allRevealed = Array.from(uniqueLetters).every(
       (l) => state.guessedLetters[l] === "correct"
     );
     if (allRevealed) {
@@ -156,7 +156,7 @@ export function useNTSGameState(
 
   const getCompletionStats = useCallback((winsToday: number): CompletionStats => {
     const timeSpent = 60 - state.timeRemaining;
-    const rightLetters = [...uniqueLetters].filter(
+    const rightLetters = Array.from(uniqueLetters).filter(
       (l) => state.guessedLetters[l] === "correct"
     ).length;
     const wrongLetters = Object.values(state.guessedLetters).filter(
