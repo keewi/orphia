@@ -23,38 +23,45 @@ npm run test     # Vitest unit tests
 
 ## Architecture
 
-**Orphia** — Next.js 14 App Router app for tracking musicals. Users collect playbills, rate shows, and follow other fans.
+**Orphia** — Next.js 14 App Router app for tracking musicals and playing musical-theatre games (Showdle, Name That Song). Users collect playbills, rate shows, follow other fans, and play daily games.
 
-**Stack:** Next.js 14.2, React 18, TypeScript 5, Supabase (PostgreSQL + Auth + Storage), Vitest.
+**Stack:** Next.js 14.2, React 18, TypeScript 5, **Neon (serverless Postgres) + Drizzle ORM**, **NextAuth (credentials provider, JWT sessions)**, Vitest.
 
-**Two Supabase clients:**
-- `lib/supabase/server.ts` — Server Components & Server Actions (cookie-based auth via `@supabase/ssr`)
-- `lib/supabase/client.ts` — Client Components (browser-only, for interactive mutations)
+> **Migration note:** This app was originally built on Supabase (Postgres + Auth). It has since migrated to Neon + Drizzle for the database and NextAuth for auth. The legacy `lib/supabase/` directory, `app/auth/*` magic-link routes, Supabase poster-sourcing scripts, and `@supabase/*` npm packages have all been removed. The old Supabase project DNS does not resolve; do not try to query it.
 
-**Middleware** (`middleware.ts`): refreshes Supabase session on every request, redirects unauthenticated users to `/login` (except public routes `/u/*`, `/auth/*`), redirects users without a handle to `/choose-handle`.
+**Database client:**
+- `lib/db/index.ts` — single Drizzle client over `@neondatabase/serverless`, wired to `DATABASE_URL`.
+- Schemas: `lib/db/schema.ts` (core Orphia: `users`, `profiles`, `musicals`, `user_reviews`, `user_musical_status`, `follows`), `lib/db/showdle-schema.ts` (`puzzles`, `puzzle_results`), `lib/db/nts-schema.ts` (`nts_musicals`, `nts_songs`, `nts_results`).
 
-**Server Actions** (`app/actions.ts`): `addReview`, `editReview` — verify auth, mutate, redirect.
+**Auth** (`auth.ts`): NextAuth with a Credentials provider — bcrypt password check against the `users` table, JWT session strategy. The exported `auth` helper is used in middleware and server components. There is no Supabase session refresh anymore.
+
+**Middleware** (`middleware.ts`): wraps `auth()` from NextAuth. Public routes: `/login`, `/u/*`, `/games/*`, `/api/showdle/*`, `/api/name-that-song/*`, `/auth/*`, `/api/auth/*`. Unauthenticated users on protected routes are redirected to `/games` (not `/login`). `/` and `/login` also redirect to `/games`. For authenticated users without a handle, queries Neon directly (raw SQL) and redirects to `/choose-handle`; caches an `x-has-handle` cookie for 5 minutes to avoid re-querying.
+
+**Server Actions** (`app/actions.ts`): `addReview`, `editReview` — verify auth via NextAuth, mutate via the write service, redirect.
 
 ## Database
 
-Five tables + one view with Row Level Security. Full DDL in `supabase/schema.sql`.
+All data lives in a single Neon Postgres database. No Row Level Security — access control is enforced in application code (services + middleware + NextAuth). Schemas are defined in Drizzle under `lib/db/*-schema.ts`.
 
-- **musicals** — show catalog (read-only for users, includes optional `popularity_rank`)
-- **user_reviews** — user playbills (integer `rating_int` 1–5, optional `watch_date`). Multiple reviews per musical allowed. Publicly readable.
-- **user_musical_status** — per-user status per musical (`want_to_see` / `seen` / `skipped`). Composite PK `(user_id, musical_id)`. Publicly readable.
-- **profiles** — user handles (unique, 3–20 chars, `[a-z0-9_]`). Publicly readable.
-- **follows** — social graph (composite PK, self-follow prevented). Publicly readable.
-- **user_latest_reviews** (view) — latest review per `(user_id, musical_id)`, built with `DISTINCT ON`.
+**Core Orphia tables:**
+- **users** — credential auth: email, bcrypt password hash. Owned by NextAuth.
+- **profiles** — user handles (unique, 3–20 chars, `[a-z0-9_]`).
+- **musicals** — show catalog with optional `popularity_rank`. *Currently empty* — the curated ranking lives in `lib/showdle/puzzleGeneration.ts` (`TOP_MUSICALS`).
+- **user_reviews** — user playbills (integer `rating_int` 1–5, optional `watch_date`). Multiple reviews per musical allowed.
+- **user_musical_status** — per-user status per musical (`want_to_see` / `seen` / `skipped`). Composite PK `(user_id, musical_id)`.
+- **follows** — social graph (composite PK, self-follow prevented).
 
-RLS pattern: most tables publicly readable; writes restricted to `auth.uid() = user_id`.
+**Game tables:**
+- **puzzles**, **puzzle_results** — Showdle daily puzzles + per-user results.
+- **nts_musicals**, **nts_songs**, **nts_results** — Name That Song catalog + results.
 
 **Ratings are full-star integers only (1–5).** Historical half-star floats were migrated via `FLOOR(rating + 0.5)` (rounds .5 up). All validation, UI, and DB constraints enforce integer stars. The domain write service (`lib/services/musicalWriteService.ts`) is the single mutation path for reviews and statuses.
 
 ## Key patterns
 
-- **Server Components** fetch data with `await createClient()` + `export const dynamic = "force-dynamic"`.
-- **Client Components** (`"use client"`) for interactive UI: search typeahead, follow toggle, nav dropdown, handle validation.
-- **Optimistic updates** in FollowButton and MusicalCard — set state first, then fire Supabase mutation.
+- **Server Components** fetch data via services (`lib/services/*`) that call the shared Drizzle client from `lib/db`. Use `export const dynamic = "force-dynamic"` for pages that must not be cached.
+- **Client Components** (`"use client"`) for interactive UI: search typeahead, follow toggle, nav dropdown, handle validation. Client mutations go through `/api/*` route handlers, not a browser DB client.
+- **Optimistic updates** in FollowButton and MusicalCard — set state first, then fire the mutation.
 - **Year-grouped galleries** on My Playbills and public profiles — shared component `YearGroupedGallery`.
 - **Handle validation** uses debounced (300ms) uniqueness checks on the `profiles` table.
 
@@ -63,15 +70,15 @@ RLS pattern: most tables publicly readable; writes restricted to `auth.uid() = u
 Follow these rules when adding or modifying features to keep the codebase modular:
 
 1. **New UI pattern?** Check `app/components/` first. Extend an existing component before creating a new one.
-2. **Need data from Supabase?** Add a function to `musicalReadService.ts` or `profileService.ts`. Never write raw Supabase queries in page files.
-3. **Protected page?** Start with `const user = await requireAuth()`. Never inline `getUser()` + `redirect("/login")`.
+2. **Need data from the DB?** Add a function to `musicalReadService.ts` or `profileService.ts` (or a game-specific service). Never write raw Drizzle queries in page files or API routes — go through a service.
+3. **Protected page?** Start with `const user = await requireAuth()`. Never inline `auth()` + `redirect("/login")`.
 4. **Dates?** Use `formatDate()` / `timeAgo()` from `lib/utils/formatDate.ts`. Never define date helpers inline.
 5. **Stars?** `<StarRating>` for display, `<StarRatingInput>` for interaction. Never inline `"★".repeat()`.
 6. **Empty content?** `<EmptyState>` with optional CTA children. Never create ad-hoc empty-state divs.
 7. **Profile display?** `<ProfileHeader>` + `<YearGroupedGallery>`. Never duplicate profile header or year-grouping logic.
 8. **Add/edit review forms?** `<ReviewForm mode="add|edit">`. Never duplicate form markup.
 9. **Poster images?** `<PosterImage>` with `mode="fill"` or `mode="fixed"`. Never duplicate the image+emoji-fallback pattern.
-10. **Legacy schema fallback?** Only exists inside `musicalReadService.ts` and `musicalWriteService.ts`. Pages never import from `lib/supabase/compat.ts` directly.
+10. **Legacy Supabase imports?** Don't add any. `lib/supabase/*` no longer exists. All new code uses `@/lib/db` (Drizzle + Neon).
 11. **Mutations?** Always go through `musicalWriteService.ts` (reviews + statuses) or server actions in `app/actions.ts`. Never mutate directly from page files.
 
 ## Key locations
@@ -84,20 +91,29 @@ Follow these rules when adding or modifying features to keep the codebase modula
 | Public profile | `app/u/[handle]/page.tsx`, `app/u/[handle]/FollowButton.tsx` |
 | Explore (home) | `app/page.tsx`, `app/ExploreCarousel.tsx`, `app/MusicalCard.tsx` |
 | Browse | `app/browse/page.tsx`, `app/SearchableMusicalGrid.tsx`, `app/SearchBar.tsx` |
-| Auth | `app/login/page.tsx`, `app/choose-handle/page.tsx`, `middleware.ts` |
+| Auth | `auth.ts` (NextAuth config), `app/login/page.tsx`, `app/choose-handle/page.tsx`, `middleware.ts` |
 | **Server actions** | `app/actions.ts` |
-| **Read service** | `lib/services/musicalReadService.ts` — all review/musical/status reads with legacy fallback |
+| **DB client** | `lib/db/index.ts` — Drizzle over Neon |
+| **DB schemas** | `lib/db/schema.ts` (core), `lib/db/showdle-schema.ts`, `lib/db/nts-schema.ts` |
+| **Read service** | `lib/services/musicalReadService.ts` — all review/musical/status reads |
 | **Write service** | `lib/services/musicalWriteService.ts` — all review/status mutations |
 | **Profile service** | `lib/services/profileService.ts` — profiles + social graph queries |
 | **Auth guard** | `lib/services/authGuard.ts` — `requireAuth()` for protected pages |
+| Games | `app/games/page.tsx` (landing), `app/games/showdle/*`, `app/games/name-that-song/*` |
+| Game APIs | `app/api/showdle/*`, `app/api/name-that-song/*` |
+| Showdle generation | `lib/showdle/puzzleGeneration.ts` — `TOP_MUSICALS` ranked list + `getTopMusicals(n)` |
 | Date utils | `lib/utils/formatDate.ts` — `formatDate()`, `timeAgo()` |
-| Supabase clients | `lib/supabase/server.ts`, `lib/supabase/client.ts` |
-| Schema compat | `lib/supabase/compat.ts` — legacy table detection + row normalization |
+| Legacy (do not use) | `supabase/schema.sql` — historical only |
 | Profile stats | `lib/profileStats.ts` (+ `.test.ts`) |
 | Analytics | `lib/analytics.ts` — type-safe event tracking |
 | Design system | `app/globals.css` |
-| DB schema | `supabase/schema.sql` |
+| Seed scripts | `scripts/seed-showdle.ts`, `scripts/seed-nts.ts` |
 
 ## Environment
 
-See `.env.local.example` for required Supabase env vars. Actual values in `.env.local` (git-ignored).
+See `.env.local.example` for required env vars:
+- `DATABASE_URL` — Neon Postgres connection string (primary data path).
+- `AUTH_SECRET` — NextAuth JWT secret.
+- `NEXT_PUBLIC_SITE_URL` — public origin (used in absolute URLs).
+
+Actual values in `.env.local` (git-ignored).
