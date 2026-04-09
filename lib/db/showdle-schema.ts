@@ -1,4 +1,5 @@
-import { pgTable, text, integer, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uniqueIndex, index, uuid } from "drizzle-orm/pg-core";
+import { users } from "./schema";
 
 // ── Showdle: Daily lyric-guessing game ──────────────────
 
@@ -23,7 +24,10 @@ export const puzzleResults = pgTable("puzzle_results", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   puzzleId: text("puzzle_id")
-    .references(() => puzzles.id)
+    .references(() => puzzles.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   guessCount: integer("guess_count").notNull(),
   won: integer("won").notNull(), // 1 = true, 0 = false (boolean via int for portability)
@@ -31,4 +35,5 @@ export const puzzleResults = pgTable("puzzle_results", {
   completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   index("puzzle_results_puzzle_completed_idx").on(table.puzzleId, table.completedAt),
+  uniqueIndex("puzzle_results_user_puzzle_idx").on(table.userId, table.puzzleId),
 ]);

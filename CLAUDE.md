@@ -109,6 +109,24 @@ Follow these rules when adding or modifying features to keep the codebase modula
 | Design system | `app/globals.css` |
 | Seed scripts | `scripts/seed-showdle.ts`, `scripts/seed-nts.ts` |
 
+## Showdle puzzle generation process
+
+When asked to generate new Showdle puzzles, follow these steps:
+
+1. **Pick target shows** from `PUZZLE_POOL_MUSICALS` in `lib/showdle/puzzleGeneration.ts`. Aim for variety across eras (golden age → contemporary). Up to 10 puzzles per show across a generation batch.
+2. **Recall an iconic lyric** for the show — prioritize title songs, the most-streamed/most-quoted number, or memorable Act openers/closers. Target lyrics a casual fan would recognize.
+3. **Choose the blank word** — the most "clickable" word in the lyric, usually the rhyme, punchline, or thematic keyword (e.g. `DEFYING`, `ARGENTINA`, `CLOWNS`). Never blank out function words (the, of, a).
+4. **Assign difficulty 1–5**:
+   - 1 = radio-famous, non-theatre fans know it
+   - 2 = well-known within a mainstream show
+   - 3 = deep cut of a famous show, or famous song from a less-mainstream show
+   - 4–5 = requires real familiarity with the show
+5. **Fill metadata**: show name, character who sings the line, original Broadway cast member in that role.
+6. **Inline verification (per puzzle)** — immediately after drafting each puzzle, verify it against an authoritative source (lyrics site, Playbill, IBDB): the lyric is accurate and in the show, the character actually sings that specific line, and the OBC attribution matches the original Broadway cast (not a replacement or revival). If something can't be verified, replace the lyric/blank/character before moving on — don't carry unverified entries into the batch.
+7. **Sanity-check the batch** — balance eras/composers, balance difficulty, no repeated answer words within the batch.
+8. **Final dedupe pass against DB** — right before insert, query `puzzles` and reject any new puzzle whose `(answer, showName)` pair (or identical lyric) already exists. Replace rejected entries and re-verify them inline.
+9. **Append, don't overwrite** — use an append-style seed script that starts after `max(scheduledDate)` so historical puzzles aren't rescheduled. See `scripts/seed-showdle-append.ts` as the pattern.
+
 ## Environment
 
 See `.env.local.example` for required env vars:

@@ -25,7 +25,7 @@ export const musicalStatusEnum = pgEnum("musical_status", [
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").unique().notNull(),
-  password_hash: text("password_hash").notNull(),
+  password_hash: text("password_hash"),
   created_at: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

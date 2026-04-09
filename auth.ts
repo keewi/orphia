@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -9,6 +10,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -26,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1);
 
         const user = rows[0];
-        if (!user) return null;
+        if (!user || !user.password_hash) return null;
 
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return null;
@@ -36,6 +41,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // For Google sign-ins, upsert the user into our users table and
+      // link by email (so a previously-created email/password user who
+      // later signs in with Google becomes the same account).
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) return false;
+
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (existing[0]) {
+          user.id = existing[0].id;
+        } else {
+          const inserted = await db
+            .insert(users)
+            .values({ email, password_hash: null })
+            .returning({ id: users.id });
+          user.id = inserted[0].id;
+        }
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.userId = user.id;

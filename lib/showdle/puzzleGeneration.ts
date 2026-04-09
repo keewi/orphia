@@ -150,3 +150,45 @@ export function getTopMusicals(n: number): TopMusical[] {
   if (n <= 0) return [];
   return TOP_MUSICALS.slice(0, n);
 }
+
+/**
+ * Puzzle-pool musicals: a narrower list of shows mainstream enough that even
+ * casual theatregoers are likely to have seen or heard of them. Used as the
+ * source pool for Showdle puzzle generation, independent of `TOP_MUSICALS`
+ * (which is the full curated catalog).
+ *
+ * Entries are titles only; most overlap with `TOP_MUSICALS` but this list
+ * is maintained independently.
+ */
+export const PUZZLE_POOL_MUSICALS: readonly string[] = [
+  "Hamilton",
+  "Wicked",
+  "The Lion King",
+  "The Phantom of the Opera",
+  "Hadestown",
+  "Six",
+  "Les Misérables",
+  "The Book of Mormon",
+  "Dear Evan Hansen",
+  "Chicago",
+  "Mamma Mia!",
+  "Rent",
+  "Cats",
+  "Sweeney Todd",
+  "Fiddler on the Roof",
+  "West Side Story",
+  "The Sound of Music",
+  "Aladdin",
+  "Frozen",
+  "Beauty and the Beast",
+  "Matilda the Musical",
+  "Hairspray",
+  "In the Heights",
+  "Cabaret",
+  "My Fair Lady",
+  "Into the Woods",
+  "Evita",
+  "Annie",
+  "Grease",
+  "Oklahoma!",
+];

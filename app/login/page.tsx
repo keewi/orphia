@@ -55,6 +55,19 @@ export default function LoginPage() {
               : "Sign in to your Orphia account"}
           </p>
 
+          <button
+            type="button"
+            className="btn btn-google"
+            disabled={loading}
+            onClick={() => signIn("google", { callbackUrl: "/" })}
+          >
+            Continue with Google
+          </button>
+
+          <div className="login-divider">
+            <span>or</span>
+          </div>
+
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">Email</label>
