@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { evaluateGuess, type TileState } from "@/lib/showdle/evaluateGuess";
+import { calculateScore } from "@/lib/showdle/score";
 
 const MAX_GUESSES = 6;
 
@@ -51,13 +52,16 @@ function saveState(state: GameState) {
 
 function postCompletion(puzzleId: string, state: GameState) {
   try {
+    const won = state.status === "won";
+    const realGuessCount = state.guesses.filter((g) => g !== "HINT").length;
+    const score = calculateScore(won, won ? realGuessCount : null, state.hintUsed);
     fetch(`/api/showdle/puzzle/${puzzleId}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        guesses: state.guesses.filter((g) => g !== "HINT"),
-        won: state.status === "won",
-        guessCount: state.guesses.length,
+        won,
+        guessCount: won ? realGuessCount : null,
+        score,
         hintUsed: state.hintUsed,
       }),
     }).catch(() => {});
@@ -203,12 +207,21 @@ export function useGameState(puzzleId: string, wordLength: number, answer: strin
     }
   }
 
+  const realGuessCount = state.guesses.filter((g) => g !== "HINT").length;
+  const score = calculateScore(
+    state.status === "won",
+    state.status === "won" ? realGuessCount : null,
+    state.hintUsed,
+  );
+
   return {
     ...state,
     toast,
     setToast,
     latestGuessIndex,
     letterStates,
+    realGuessCount,
+    score,
     addLetter,
     deleteLetter,
     submitGuess,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ShowdleCard from "./ShowdleCard";
 
 export const metadata = {
   title: "Games — Orphia",
@@ -17,17 +18,7 @@ export default function GamesPage() {
 
       <div className="games-landing-grid">
         {/* Showdle card */}
-        <Link href="/games/showdle" className="game-card">
-          <div className="game-card-badge">Daily</div>
-          <div className="game-card-icon">🎭</div>
-          <h2 className="game-card-title">Showdle</h2>
-          <p className="game-card-desc">
-            Guess the mystery musical from a cryptic lyric clue. A new puzzle every day.
-          </p>
-          <div className="game-card-cta">
-            Play today&rsquo;s puzzle &rarr;
-          </div>
-        </Link>
+        <ShowdleCard />
 
         {/* Name That Song card */}
         <Link href="/games/name-that-song" className="game-card">

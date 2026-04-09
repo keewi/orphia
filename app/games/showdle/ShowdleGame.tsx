@@ -31,6 +31,8 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
     hintShowName,
     latestGuessIndex,
     letterStates,
+    realGuessCount,
+    score,
     toast,
     setToast,
     addLetter,
@@ -64,7 +66,6 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
   }, [handleKeyDown]);
 
   // Hint disabled when: already used, game over, or 5+ real guesses submitted
-  const realGuessCount = guesses.filter((g) => g !== "HINT").length;
   const hintDisabled = hintUsed || status !== "playing" || realGuessCount >= 5;
 
   const handleHintConfirm = () => {
@@ -113,9 +114,11 @@ export default function ShowdleGame({ puzzle }: ShowdleGameProps) {
           puzzleId={puzzle.id}
           won={status === "won"}
           guessCount={guesses.length}
+          realGuessCount={realGuessCount}
           evaluations={evaluations}
           wordLength={puzzle.wordLength}
           hintUsed={hintUsed}
+          score={score}
         />
       )}
     </>

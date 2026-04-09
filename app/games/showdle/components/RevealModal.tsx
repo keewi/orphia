@@ -1,130 +1,203 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import DifficultyBadge from "./DifficultyBadge";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import Histogram from "./Histogram";
+import LyricReveal from "./LyricReveal";
+import MiniLeaderboard from "./MiniLeaderboard";
+import { getResultMessage } from "@/lib/showdle/resultMessages";
 import type { TileState } from "@/lib/showdle/evaluateGuess";
 
 interface RevealData {
+  lyric: string;
   showName: string;
+  songName: string;
+  year: number;
   characterName: string;
   originalCast: string | null;
   difficulty: number;
   answer: string;
+  guessDistribution: number[];
+  totalPlayers: number;
+}
+
+interface PersonalStats {
+  currentStreak: number;
+  totalPlayed: number;
+  winRate: number;
+  totalScore: number;
 }
 
 interface RevealModalProps {
   puzzleId: string;
   won: boolean;
+  /** Total rows in the guess array, including the HINT pseudo-row. */
   guessCount: number;
+  /** Real guesses only (excludes HINT). Used in the "Correct! N guesses" line. */
+  realGuessCount: number;
   evaluations: TileState[][];
   wordLength: number;
   hintUsed: boolean;
+  score: number;
 }
 
 const MAX_GUESSES = 6;
 
-const SQUARE_COLORS: Record<TileState | "empty", React.CSSProperties> = {
-  correct: { background: "#2d6a2d" },
-  present: { background: "#c8922a" },
-  absent: { background: "#e8e0d4" },
-  hint: { background: "#f0e8d8", border: "1px solid #d4c9b8", opacity: 0.5 },
-  empty: { background: "transparent", border: "1px solid #e0d5c4" },
+const TILE_CLASS: Record<TileState | "empty", string> = {
+  correct: "sq sq-c",
+  present: "sq sq-p",
+  absent: "sq sq-a",
+  hint: "sq sq-h",
+  empty: "sq sq-e",
 };
 
 export default function RevealModal({
   puzzleId,
   won,
-  guessCount,
+  realGuessCount,
   evaluations,
   wordLength,
-  // hintUsed,  // reserved for share text
+  hintUsed,
+  score,
 }: RevealModalProps) {
+  const router = useRouter();
   const [data, setData] = useState<RevealData | null>(null);
+  const [stats, setStats] = useState<PersonalStats | null>(null);
 
+  // Stable result message — computed once on mount
+  const resultMessage = useMemo(() => getResultMessage(won), [won]);
+
+  // Reveal fetch — blocks modal render
   useEffect(() => {
     fetch(`/api/showdle/puzzle/${puzzleId}/reveal`)
-      .then((r) => r.json())
-      .then(setData)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setData(d);
+      })
       .catch(() => {});
   }, [puzzleId]);
 
+  // Personal stats fetch — independent, non-blocking, 401 silently ignored
+  useEffect(() => {
+    fetch("/api/showdle/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        if (s && typeof s.currentStreak === "number") setStats(s);
+      })
+      .catch(() => {});
+  }, []);
+
   if (!data) return null;
 
-  // Result line
-  const resultText = won
-    ? `Correct! ${guessCount} ${guessCount === 1 ? "guess" : "guesses"}`
-    : null;
-  const lossText = !won ? `The answer was ${data.answer}` : null;
-
-  const castLine = data.originalCast
-    ? `${data.characterName} \u2022 ${data.originalCast}`
-    : data.characterName;
-
-  // Build scoreboard rows — always 6
-  const scoreboardRows: React.ReactNode[] = [];
+  // Build guess grid — always 6 rows
+  const gridRows: React.ReactNode[] = [];
   for (let row = 0; row < MAX_GUESSES; row++) {
     const squares: React.ReactNode[] = [];
     for (let col = 0; col < wordLength; col++) {
       const state: TileState | "empty" =
         row < evaluations.length ? evaluations[row][col] : "empty";
-      squares.push(
-        <div
-          key={col}
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 4,
-            boxSizing: "border-box",
-            ...SQUARE_COLORS[state],
-          }}
-        />,
-      );
+      squares.push(<div key={col} className={TILE_CLASS[state]} />);
     }
-    scoreboardRows.push(
-      <div key={row} style={{ display: "flex", gap: 3 }}>
+    gridRows.push(
+      <div key={row} className="sd-sb-row">
         {squares}
       </div>,
     );
   }
 
+  // Histogram highlight: only on wins
+  const highlightIndex = won ? realGuessCount : null;
+
   return (
     <div className="sd-modal-backdrop">
       <div className="sd-modal-panel">
-        {resultText && <p className="sd-modal-result">{resultText}</p>}
-        {lossText && (
-          <p className="sd-modal-result" style={{ color: "#b03a2e" }}>
-            {lossText}
-          </p>
+        {/* Lyric reveal — black panel at top */}
+        <LyricReveal
+          lyric={data.lyric}
+          answer={data.answer}
+          won={won}
+          resultMessage={resultMessage}
+        />
+
+        {/* Song + show + cast */}
+        {data.songName && (
+          <p className="sd-song-name">&ldquo;{data.songName}&rdquo;</p>
         )}
-        <p className="sd-modal-show">{data.showName}</p>
-        <p className="sd-modal-detail">{castLine}</p>
-        <DifficultyBadge difficulty={data.difficulty} />
+        <p className="sd-show-name">
+          {data.showName}
+          {data.year ? ` · ${data.year}` : ""}
+          {data.originalCast ? ` · ${data.originalCast}` : ""}
+        </p>
 
-        {/* Scoreboard grid */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 3,
-            alignItems: "center",
-            margin: "8px 0",
-          }}
-        >
-          {scoreboardRows}
-        </div>
-
-        {/* Slice 4: add Share Result button here (primary sd-gold style) */}
-
-        <div style={{ marginTop: 12 }}>
-          <button
-            className="sd-btn sd-btn--secondary"
-            onClick={() => {
-              /* TODO: Slice 4 — Navigate to archive */
-            }}
+        {/* Points pill */}
+        <div style={{ marginBottom: 12 }}>
+          <span
+            className={
+              "sd-points-pill" + (won ? "" : " sd-points-pill--loss")
+            }
           >
-            Play Archive
-          </button>
+            +{" "}
+            <span className="pts">{won ? score : 0}</span>{" "}
+            points
+            {hintUsed && won && (
+              <span style={{ color: "var(--sd-gold-muted)", fontSize: 11 }}>
+                (×0.5 hint)
+              </span>
+            )}
+          </span>
         </div>
+
+        {hintUsed && won && (
+          <p className="sd-hint-note">Hint used — score halved</p>
+        )}
+
+        {/* Personal stat row */}
+        {stats && (
+          <div className="sd-stat-row">
+            <div className="sd-stat-item">
+              <div className="sd-stat-val">
+                {stats.totalScore.toLocaleString()}
+              </div>
+              <div className="sd-stat-lbl">Total pts</div>
+            </div>
+            <div className="sd-stat-item">
+              <div className="sd-stat-val">{stats.winRate}%</div>
+              <div className="sd-stat-lbl">Win %</div>
+            </div>
+            <div className="sd-stat-item">
+              <div className="sd-stat-val">🔥 {stats.currentStreak}</div>
+              <div className="sd-stat-lbl">Streak</div>
+            </div>
+            <div className="sd-stat-item">
+              <div className="sd-stat-val">{stats.totalPlayed}</div>
+              <div className="sd-stat-lbl">Played</div>
+            </div>
+          </div>
+        )}
+
+        {/* Guess grid */}
+        <div className="sd-scoreboard">{gridRows}</div>
+
+        {/* Histogram */}
+        {data.totalPlayers > 0 && (
+          <Histogram
+            distribution={data.guessDistribution}
+            totalPlayers={data.totalPlayers}
+            highlightIndex={highlightIndex}
+            label="Today's puzzle — all players"
+          />
+        )}
+
+        {/* Back to Games */}
+        <button
+          className="sd-btn sd-btn--secondary"
+          onClick={() => router.push("/games")}
+        >
+          Back to Games
+        </button>
+
+        {/* Mini leaderboard */}
+        <MiniLeaderboard />
       </div>
     </div>
   );
