@@ -1,6 +1,6 @@
 /* ── NTS Design System ── */
 .nts-root {
-  /* Colours — from Orphia shared palette */
+  /* Colours — from ORPHEA shared palette */
   --nts-ink:            #1a1108;
   --nts-cream:          #faf5ee;
   --nts-surface:        #ffffff;
@@ -31,7 +31,7 @@
   --nts-radius-xl:   14px;
   --nts-radius-full: 9999px;
 
-  /* Spacing — 4px base unit (matches Orphia --space-* system) */
+  /* Spacing — 4px base unit (matches ORPHEA --space-* system) */
   --nts-space-1:   4px;
   --nts-space-2:   8px;
   --nts-space-3:   12px;

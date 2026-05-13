@@ -63,7 +63,7 @@ export default function FindFriendsPage() {
         <div className="form-card">
           <h1>Find Friends</h1>
           <p className="login-subtitle">
-            Look up a friend by their Orphia handle
+            Look up a friend by their ORPHEA handle
           </p>
 
           <form onSubmit={handleSubmit}>
