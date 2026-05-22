@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "ORPHEA",
+    "slug": "orphea",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "orphea",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0E12"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.orphea.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0E12",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.orphea.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font"
+    ]
+  }
+}

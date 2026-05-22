@@ -52,7 +52,7 @@ export default function LoginPage() {
           <p className="login-subtitle">
             {isSignUp
               ? "Sign up to start building your playbill collection"
-              : "Sign in to your Orphia account"}
+              : "Sign in to your ORPHEA account"}
           </p>
 
           <button

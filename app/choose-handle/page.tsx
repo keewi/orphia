@@ -96,7 +96,7 @@ export default function ChooseHandlePage() {
         <div className="form-card">
           <h1>Choose your handle</h1>
           <p className="login-subtitle">
-            Pick a unique username for your public Orphia profile
+            Pick a unique username for your public ORPHEA profile
           </p>
 
           <form onSubmit={handleSubmit}>

@@ -11,6 +11,11 @@ export default auth(async (req) => {
     return NextResponse.next();
   }
 
+  // Mobile API routes handle their own auth via Bearer tokens
+  if (pathname.startsWith("/api/mobile/")) {
+    return NextResponse.next();
+  }
+
   // Public routes that don't need auth
   const isPublicRoute =
     pathname.startsWith("/login") || pathname.startsWith("/u/") || pathname.startsWith("/games") || pathname.startsWith("/api/showdle") || pathname.startsWith("/api/name-that-song") || pathname.startsWith("/privacy") || pathname.startsWith("/terms");

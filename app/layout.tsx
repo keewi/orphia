@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Orphia",
+  title: "ORPHEA",
   description: "Your VIP theatre companion",
 };
 
@@ -60,7 +60,7 @@ export default function RootLayout({
               <path d="M22 2 L28 8 L22 8 Z" fill="currentColor" opacity="0.5" />
               <ellipse cx="16" cy="17" rx="7" ry="8" stroke="currentColor" strokeWidth="2" />
             </svg>
-            <span className="header-logo-text">Orphia</span>
+            <span className="header-logo-text">ORPHEA</span>
           </Link>
           <Navigation />
         </header>

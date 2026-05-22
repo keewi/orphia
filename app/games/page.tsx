@@ -2,7 +2,7 @@ import Link from "next/link";
 import ShowdleCard from "./ShowdleCard";
 
 export const metadata = {
-  title: "Games — Orphia",
+  title: "Games — ORPHEA",
   description: "Musical theater games — test your knowledge!",
 };
 
