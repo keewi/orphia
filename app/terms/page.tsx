@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Terms of Service — Orphia",
+  title: "Terms of Service — ORPHEA",
 };
 
 export default function TermsPage() {
@@ -10,14 +10,14 @@ export default function TermsPage() {
         <p><em>Last updated: April 8, 2026</em></p>
 
         <p>
-          Welcome to Orphia. By creating an account or using the site, you
-          agree to these terms. Orphia is a personal project provided as-is,
+          Welcome to ORPHEA. By creating an account or using the site, you
+          agree to these terms. ORPHEA is a personal project provided as-is,
           without warranty of any kind.
         </p>
 
         <h2>Your account</h2>
         <ul>
-          <li>You must be at least 13 years old to use Orphia.</li>
+          <li>You must be at least 13 years old to use ORPHEA.</li>
           <li>
             You&apos;re responsible for keeping your sign-in credentials
             secure and for activity on your account.
@@ -31,7 +31,7 @@ export default function TermsPage() {
         <h2>Your content</h2>
         <p>
           You own the reviews, ratings, and other content you post. By posting,
-          you grant Orphia a non-exclusive license to display that content to
+          you grant ORPHEA a non-exclusive license to display that content to
           other users of the site. Don&apos;t post content that is unlawful,
           infringing, harassing, or spam.
         </p>
@@ -47,19 +47,19 @@ export default function TermsPage() {
         <ul>
           <li>Don&apos;t scrape, automate, or attempt to break the site.</li>
           <li>Don&apos;t attempt to access other users&apos; accounts.</li>
-          <li>Don&apos;t use Orphia for anything illegal.</li>
+          <li>Don&apos;t use ORPHEA for anything illegal.</li>
         </ul>
 
         <h2>Termination</h2>
         <p>
           We may suspend or terminate accounts that violate these terms. You
-          can stop using Orphia at any time; see the Privacy Policy for how
+          can stop using ORPHEA at any time; see the Privacy Policy for how
           to request data deletion.
         </p>
 
         <h2>Disclaimer</h2>
         <p>
-          Orphia is provided &quot;as is&quot; without warranty of any kind,
+          ORPHEA is provided &quot;as is&quot; without warranty of any kind,
           express or implied. To the maximum extent permitted by law, the
           developer is not liable for any damages arising from use of the
           site.

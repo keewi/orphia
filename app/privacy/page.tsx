@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Privacy Policy — Orphia",
+  title: "Privacy Policy — ORPHEA",
 };
 
 export default function PrivacyPage() {
@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         <p><em>Last updated: April 8, 2026</em></p>
 
         <p>
-          Orphia (&quot;we&quot;, &quot;us&quot;) is a personal project that lets
+          ORPHEA (&quot;we&quot;, &quot;us&quot;) is a personal project that lets
           musical-theatre fans track shows they&apos;ve seen and play daily
           games. This policy explains what we collect and why.
         </p>
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Profile info.</strong> A handle you choose, and any
             playbills, ratings, watch dates, follows, and game results you
-            create on Orphia.
+            create on ORPHEA.
           </li>
           <li>
             <strong>Technical info.</strong> Standard server logs (IP,
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <ul>
           <li>To sign you in and keep your session active.</li>
           <li>To show you your own playbills, reviews, and game history.</li>
-          <li>To show your public profile to other Orphia users.</li>
+          <li>To show your public profile to other ORPHEA users.</li>
           <li>To operate the daily games and compute scores.</li>
         </ul>
 
