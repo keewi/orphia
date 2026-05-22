@@ -31,7 +31,7 @@ export async function GET(
       getUserReviews(profile.id),
     ]);
 
-    const musicalIds = [...new Set(reviews.map((r) => r.musical_id))];
+    const musicalIds = Array.from(new Set(reviews.map((r) => r.musical_id)));
     const musicalsMap = await getMusicalsByIds(musicalIds);
 
     const enrichedReviews = reviews.map((r) => ({

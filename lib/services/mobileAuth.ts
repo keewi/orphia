@@ -27,7 +27,7 @@ export async function getMobileUser(
   const token = authHeader.slice(7);
 
   try {
-    const decoded = await decode({ token, secret: AUTH_SECRET });
+    const decoded = await decode({ token, secret: AUTH_SECRET, salt: "authjs.session-token" });
     if (!decoded?.userId) return null;
 
     return {

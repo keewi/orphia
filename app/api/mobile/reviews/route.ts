@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const user = await requireMobileUser(request);
     const reviews = await getUserReviews(user.id);
 
-    const musicalIds = [...new Set(reviews.map((r) => r.musical_id))];
+    const musicalIds = Array.from(new Set(reviews.map((r) => r.musical_id)));
     const musicalsMap = await getMusicalsByIds(musicalIds);
 
     const enriched = reviews.map((r) => ({

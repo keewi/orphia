@@ -28,18 +28,14 @@ export async function GET(request: NextRequest) {
       getWantToSeeForUsers(followedIds, 20),
     ]);
 
-    const allMusicalIds = [
-      ...new Set([
-        ...reviews.map((r) => r.musical_id),
-        ...wantToSee.map((w) => w.musical_id),
-      ]),
-    ];
-    const allUserIds = [
-      ...new Set([
-        ...reviews.map((r) => r.user_id),
-        ...wantToSee.map((w) => w.user_id),
-      ]),
-    ];
+    const allMusicalIds = Array.from(new Set([
+      ...reviews.map((r) => r.musical_id),
+      ...wantToSee.map((w) => w.musical_id),
+    ]));
+    const allUserIds = Array.from(new Set([
+      ...reviews.map((r) => r.user_id),
+      ...wantToSee.map((w) => w.user_id),
+    ]));
 
     const [musicalsMap, profilesMap] = await Promise.all([
       getMusicalsByIds(allMusicalIds),

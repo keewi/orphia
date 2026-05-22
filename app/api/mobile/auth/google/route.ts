@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
         sub: userId,
       },
       secret: AUTH_SECRET,
+      salt: "authjs.session-token",
     });
 
     return NextResponse.json({
